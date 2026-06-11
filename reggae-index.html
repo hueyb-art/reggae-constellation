@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
+<title>The Reggae Constellation — an encyclopedia of who shaped whom</title>
+<style>
+  :root{
+    --bg:#0c0a0d; --panel:rgba(22,18,24,0.93); --ink:#f3ece0; --soft:#b6aaa0;
+    --muted:#8d8378; --gold:#e0b15a; --line:rgba(224,177,90,0.14);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:radial-gradient(1200px 800px at 70% -10%, #1a1420 0%, var(--bg) 55%);
+    color:var(--ink); font-family:"Helvetica Neue",Arial,sans-serif; overflow:hidden;
+  }
+  #stage{position:fixed;inset:0}
+  canvas{display:block}
+
+  .topbar{position:fixed;top:0;left:0;right:0;display:flex;align-items:center;gap:18px;padding:16px 22px;pointer-events:none;z-index:5}
+  .brand{pointer-events:auto}
+  .brand h1{font-size:19px;font-weight:600;letter-spacing:.04em}
+  .brand .tag{font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-top:3px}
+  .ver{font-size:10px;font-weight:400;color:var(--muted);letter-spacing:.05em;vertical-align:middle}
+  .search{pointer-events:auto;margin-left:auto;position:relative}
+  .search input{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:999px;color:var(--ink);font-size:13px;padding:9px 16px;width:230px;outline:none;transition:border-color .2s,background .2s}
+  .search input:focus{border-color:var(--gold);background:rgba(255,255,255,.08)}
+  .search input::placeholder{color:var(--muted)}
+  .suggest{position:absolute;top:42px;right:0;width:250px;background:var(--panel);border:1px solid rgba(255,255,255,.1);border-radius:12px;overflow:hidden;backdrop-filter:blur(8px);box-shadow:0 18px 50px rgba(0,0,0,.55);display:none}
+  .suggest div{padding:9px 14px;font-size:13px;cursor:pointer;color:var(--soft)}
+  .suggest div:hover,.suggest div.active{background:rgba(224,177,90,.14);color:var(--ink)}
+
+  .legend{position:fixed;left:22px;bottom:20px;z-index:5;display:flex;flex-direction:column;gap:7px;background:var(--panel);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:13px 15px;backdrop-filter:blur(8px)}
+  .legend .lh{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+  .legend label{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--soft);cursor:pointer;user-select:none}
+  .legend .dot{width:11px;height:11px;border-radius:50%;flex:none}
+  .legend label.off{opacity:.4}
+
+  .hint{position:fixed;right:22px;bottom:20px;z-index:5;font-size:11.5px;color:var(--muted);text-align:right;line-height:1.7;background:var(--panel);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:10px 14px;backdrop-filter:blur(8px)}
+  .hint b{color:var(--soft);font-weight:600}
+  .spread{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:5;display:flex;align-items:center;gap:11px;background:var(--panel);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:9px 16px;backdrop-filter:blur(8px)}
+  .spread span{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  .spread input[type=range]{width:150px;accent-color:var(--gold);cursor:pointer}
+  .clipnote{position:fixed;top:62px;left:50%;transform:translateX(-50%);z-index:9;background:var(--panel);border:1px solid rgba(224,177,90,.4);color:var(--gold);font-size:12.5px;padding:7px 16px;border-radius:999px;backdrop-filter:blur(8px);opacity:0;transition:opacity .3s;pointer-events:none;max-width:80%;text-align:center}
+  .clipnote.show{opacity:1}
+
+  .panel{position:fixed;top:0;right:0;height:100%;width:360px;background:var(--panel);border-left:1px solid rgba(255,255,255,.1);backdrop-filter:blur(14px);transform:translateX(100%);transition:transform .35s cubic-bezier(.2,.8,.2,1);z-index:8;padding:26px 26px 30px;overflow-y:auto}
+  .panel.open{transform:translateX(0)}
+  .panel .close{position:absolute;top:18px;right:18px;cursor:pointer;color:var(--muted);font-size:22px;line-height:1;background:none;border:none}
+  .panel .close:hover{color:var(--ink)}
+  .pill{display:inline-block;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;padding:4px 11px;border-radius:999px;margin-bottom:14px;font-weight:600}
+  .panel h2{font-size:25px;font-weight:600;line-height:1.15;margin-bottom:4px}
+  .panel .role{font-size:13px;color:var(--gold);margin-bottom:4px}
+  .panel .life{font-size:12px;color:var(--muted);margin-bottom:16px}
+  .panel .bio{font-size:14px;line-height:1.6;color:var(--soft);margin-bottom:18px}
+  .openpage{display:inline-flex;align-items:center;gap:8px;background:rgba(224,177,90,.14);border:1px solid rgba(224,177,90,.35);color:var(--gold);font-size:13px;font-weight:600;padding:10px 16px;border-radius:10px;cursor:pointer;transition:background .2s}
+  .openpage:hover{background:rgba(224,177,90,.24)}
+  .sec{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:20px 0 9px}
+  .conns{display:flex;flex-direction:column;gap:5px}
+  .conn{display:flex;align-items:baseline;gap:9px;font-size:13px;cursor:pointer;padding:5px 8px;border-radius:8px;color:var(--soft)}
+  .conn:hover{background:rgba(224,177,90,.12);color:var(--ink)}
+  .conn .rel{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;min-width:90px}
+  .conn .nm{font-weight:500}
+
+  /* full encyclopedia page */
+  .page{position:fixed;inset:0;z-index:20;background:radial-gradient(1000px 700px at 78% -8%, #1c1622 0%, var(--bg) 58%);overflow-y:auto;opacity:0;pointer-events:none;transition:opacity .35s}
+  .page.open{opacity:1;pointer-events:auto}
+  .page-inner{max-width:820px;margin:0 auto;padding:34px 28px 90px}
+  .back{display:inline-flex;align-items:center;gap:8px;background:none;border:1px solid rgba(255,255,255,.16);color:var(--soft);font-size:13px;padding:8px 15px;border-radius:999px;cursor:pointer;margin-bottom:30px;transition:border-color .2s,color .2s}
+  .back:hover{border-color:var(--gold);color:var(--ink)}
+  .page h1{font-size:46px;font-weight:600;line-height:1.05;letter-spacing:-.01em;margin:10px 0 8px}
+  .page .prole{font-size:15px;color:var(--gold);margin-bottom:3px}
+  .page .plife{font-size:13.5px;color:var(--muted);margin-bottom:26px}
+  .page .pbio{font-size:17px;line-height:1.72;color:#ddd3c6;max-width:680px;margin-bottom:8px}
+  .phead{display:flex;gap:22px;align-items:center;margin-bottom:10px}
+  .pavatar{width:104px;height:104px;border-radius:16px;flex:none;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:600;color:#0c0a0d}
+  .pavatar.hasimg{color:transparent}
+  .pavatar img{width:100%;height:100%;object-fit:cover;display:block}
+  .pavcol{display:flex;flex-direction:column;align-items:center;gap:5px;flex:none}
+  .pcredit{font-size:10px;color:var(--muted);text-decoration:none;opacity:0;transition:opacity .3s}
+  .pcredit.show{opacity:1}
+  .pcredit:hover{color:var(--gold)}
+  .pheadtext{min-width:0}
+  .phead h1{margin:6px 0 6px}
+  .page h3{font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:40px 0 16px;border-bottom:1px solid rgba(255,255,255,.08);padding-bottom:10px}
+  .disco{display:flex;flex-direction:column;gap:2px}
+  .drow{display:flex;gap:18px;align-items:baseline;padding:11px 8px;border-radius:8px}
+  .drow:hover{background:rgba(255,255,255,.03)}
+  .dyear{font-family:"SF Mono",ui-monospace,Menlo,monospace;font-size:13px;color:var(--gold);min-width:74px;flex:none}
+  .dtitle{font-size:15.5px;color:var(--ink);font-weight:500}
+  .dnote{font-size:13px;color:var(--muted);margin-left:6px}
+  .chips{display:flex;flex-wrap:wrap;gap:9px}
+  .chip{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:999px;padding:8px 14px;font-size:13px;color:var(--soft);cursor:pointer;transition:background .2s,border-color .2s}
+  .chip:hover{background:rgba(224,177,90,.14);border-color:rgba(224,177,90,.4);color:var(--ink)}
+  .chip .cd{width:9px;height:9px;border-radius:50%;flex:none}
+  .chip .cr{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .discoloading{font-size:14px;color:var(--muted);padding:8px 0}
+  .discometa{font-size:12px;color:var(--muted);margin-bottom:10px}
+  .dtag{font-size:10.5px;color:var(--muted);margin-left:8px;border:1px solid rgba(255,255,255,.14);border-radius:4px;padding:1px 6px;text-transform:uppercase;letter-spacing:.04em}
+  .moreBtn{margin-top:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.14);color:var(--soft);font-size:13px;padding:9px 16px;border-radius:10px;cursor:pointer}
+  .moreBtn:hover{border-color:var(--gold);color:var(--ink)}
+  .dmain{display:inline}
+  .svc{display:inline-flex;gap:6px;margin-left:10px;vertical-align:middle}
+  .svc a{font-size:11px;color:var(--muted);border:1px solid rgba(255,255,255,.14);border-radius:6px;padding:1px 7px;text-decoration:none;transition:color .2s,border-color .2s}
+  .svc a:hover{color:var(--gold);border-color:var(--gold)}
+  @media(max-width:700px){.drow .dmain{display:flex;flex-direction:column;align-items:flex-start;gap:5px}.svc{margin-left:0}}
+  .reslist{display:flex;flex-direction:column;gap:8px;max-width:680px}
+  .reslink{display:flex;align-items:baseline;gap:12px;text-decoration:none;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px 16px;transition:border-color .2s,background .2s}
+  .reslink:hover{border-color:var(--gold);background:rgba(224,177,90,.1)}
+  .reslink .rt{color:var(--ink);font-size:15px;font-weight:500}
+  .reslink .rn{color:var(--muted);font-size:13px;flex:1}
+  .reslink .ra{color:var(--gold);font-size:14px}
+  .brow{padding:9px 8px;border-radius:8px}
+  .brow:hover{background:rgba(255,255,255,.03)}
+  .btitle{font-size:15px;color:var(--ink);font-style:italic}
+  .bmeta{font-size:13px;color:var(--muted)}
+  .rr{pointer-events:auto;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);color:var(--soft);font-size:12.5px;padding:8px 14px;border-radius:999px;cursor:pointer;transition:border-color .2s,color .2s}
+  .rr:hover{border-color:var(--gold);color:var(--ink)}
+  .rr.on{border-color:var(--gold);color:var(--gold)}
+  .instr{pointer-events:auto;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);color:var(--soft);font-size:12.5px;padding:8px 12px;border-radius:999px;cursor:pointer;outline:none}
+  .instr:focus{border-color:var(--gold)}
+  .instr option{background:#15121a;color:var(--ink)}
+  .lead{font-size:17px;line-height:1.7;color:#ddd3c6;max-width:680px;margin-bottom:18px}
+  .critic{margin-bottom:24px}
+  .critic h4{font-size:18px;font-weight:600;color:var(--ink);margin-bottom:2px}
+  .critic .cnote{font-size:13px;color:var(--gold);margin-bottom:8px}
+  @media(max-width:560px){.page h1{font-size:34px}.page-inner{padding:24px 18px 70px}}
+  #stage,canvas{touch-action:none}
+  @media(max-width:700px){
+    .topbar{flex-wrap:wrap;gap:8px;padding:10px 12px}
+    .brand h1{font-size:15px}
+    .brand .tag{display:none}
+    .rr{font-size:11.5px;padding:6px 10px}
+    .instr{font-size:11.5px;padding:6px 9px}
+    .search{margin-left:auto}
+    .search input{width:140px}
+    .suggest{width:200px}
+    .hint{display:none}
+    .legend{left:12px;bottom:12px;padding:8px 10px;gap:4px;border-radius:12px}
+    .legend .lh{font-size:9.5px}
+    .legend label{font-size:11px;gap:7px}
+    .legend .dot{width:9px;height:9px}
+    .spread{left:auto;right:12px;bottom:12px;transform:none;padding:7px 11px;gap:7px}
+    .spread input[type=range]{width:92px}
+    .spread span{font-size:9.5px}
+    .panel{width:100%;height:auto;max-height:50%;top:auto;bottom:0;left:0;border-left:none;border-top:1px solid rgba(255,255,255,.12);border-radius:18px 18px 0 0;transform:translateY(100%);padding:20px 22px 24px}
+    .panel.open{transform:translateY(0)}
+  }
+</style>
+</head>
+<body>
+<div id="stage"><canvas id="c"></canvas></div>
+
+<div class="topbar">
+  <div class="brand">
+    <h1>The Reggae Constellation <span class="ver">v1</span></h1>
+    <div class="tag">An encyclopedia of who shaped whom</div>
+  </div>
+  <button class="rr" id="rrBtn">Reading room</button>
+  <button class="rr" id="fitBtn">Fit to screen</button>
+  <select class="instr" id="instr" aria-label="Filter by instrument"><option value="">All instruments</option></select>
+  <div class="search">
+    <input id="q" type="text" placeholder="Find a musician…" autocomplete="off" />
+    <div class="suggest" id="suggest"></div>
+  </div>
+</div>
+
+<div class="legend" id="legend"></div>
+<div class="hint"><b>Hover</b> to trace ties &middot; <b>Click</b> for a card &middot; <b>Double-click</b> for the full page<br><b>Drag</b> to spin the globe &middot; <b>Scroll</b> to zoom</div>
+<div class="spread"><span>Tight</span><input id="spread" type="range" min="0.7" max="3.4" step="0.05" value="1.5" aria-label="Spread the network out" /><span>Spread</span></div>
+<div id="clipnote" class="clipnote"></div>
+
+<aside class="panel" id="panel"><button class="close" id="close">&times;</button><div id="panelBody"></div></aside>
+<div class="page" id="page"><div class="page-inner" id="pageInner"></div></div>
+
+<script>
+const ERAS={
+  ska:{label:"Ska & foundations",color:"#e0b15a"},
+  rocksteady:{label:"Rocksteady",color:"#d98c3f"},
+  roots:{label:"Roots reggae",color:"#3faf5a"},
+  dub:{label:"Dub & production",color:"#4f93d8"},
+  dancehall:{label:"Dancehall",color:"#d9607a"},
+  digital:{label:"Digital & ragga",color:"#9b7fd4"},
+  contemporary:{label:"Contemporary",color:"#cf7bbf"},
+};
+function n(id,name,era,role,life,blurb,bio,disco){return{id,name,era,role,life,blurb,bio,disco};}
+const NODES=[
+n("coxsone","Clement \"Coxsone\" Dodd","ska","Producer · Studio One","1932–2004 · Jamaican","Founder of Studio One, reggae's Motown.","The visionary sound-system man and producer whose Studio One was the cradle of ska, rocksteady, and roots, recording nearly every great early Jamaican artist.",[["1960s","Studio One foundation sides",""]]),
+n("dukereid","Duke Reid","ska","Producer · Treasure Isle","1915–1975 · Jamaican","'The Trojan' of Treasure Isle.","A former policeman turned sound-system king and producer whose Treasure Isle studio defined the lush sound of rocksteady.",[["1967","Treasure Isle rocksteady sides",""]]),
+n("princebuster","Prince Buster","ska","Vocals · producer","1938–2016 · Jamaican","Ska's defiant pioneer.","A singer, producer, and sound-system rebel whose hits like 'Al Capone' and 'Madness' shaped ska and inspired the British 2 Tone movement.",[["1967","Fabulous Greatest Hits",""]]),
+n("skatalites","The Skatalites","ska","Band","est.1964 · Jamaican","The instrumental engine of ska.","Jamaica's greatest instrumental band, a powerhouse of jazz-trained players who cut the foundational ska of the 1960s at Studio One.",[["1965","Ska Authentic",""]]),
+n("dondrummond","Don Drummond","ska","Trombone","1932–1969 · Jamaican","Ska's tragic trombone genius.","A brilliant, troubled trombonist of the Skatalites whose haunting melodies are among ska's deepest music.",[["1965","with the Skatalites",""]]),
+n("tommymccook","Tommy McCook","ska","Saxophone","1927–1998 · Jamaican","Reed-man and bandleader of ska.","A jazz-rooted tenor saxophonist who co-founded the Skatalites and led Treasure Isle's Supersonics through the rocksteady era.",[["1965","with the Skatalites",""]]),
+n("rolandalphonso","Roland Alphonso","ska","Saxophone","1931–1998 · Jamaican","'The Chief Musician' of ska.","A foundational tenor saxophonist of the Skatalites and Studio One, one of the most recorded players in Jamaican music.",[["1965","with the Skatalites",""]]),
+n("ernestranglin","Ernest Ranglin","ska","Guitar","b.1932 · Jamaican","The guitarist who shaped the Jamaican sound.","A jazz-schooled guitarist whose arrangements (including 'My Boy Lollipop') and playing underpinned ska's birth and decades of Jamaican music.",[["1964","Wranglin",""]]),
+n("desmonddekker","Desmond Dekker","ska","Vocals","1941–2006 · Jamaican","Ska's first international star.","The singer whose 'Israelites' became the first Jamaican song to top the UK charts, carrying ska and rocksteady to the world.",[["1969","Israelites",""]]),
+n("derrickmorgan","Derrick Morgan","ska","Vocals","b.1940 · Jamaican","Ska's hit-making everyman.","A dominant singer of the ska era whose string of hits and famous rivalry with Prince Buster lit up Jamaican music.",[["1969","Moon Hop",""]]),
+n("laurelaitken","Laurel Aitken","ska","Vocals","1927–2005 · Cuban-Jamaican","'The Godfather of Ska.'","A pioneering singer, born in Cuba, whose early recordings helped launch Jamaican popular music and British ska.",[["1960","Boogie in My Bones",""]]),
+n("milliesmall","Millie Small","ska","Vocals","1947–2020 · Jamaican","Ska's global breakthrough voice.","The singer whose 1964 'My Boy Lollipop' became a worldwide smash and introduced ska to a mass audience.",[["1964","My Boy Lollipop",""]]),
+n("byronlee","Byron Lee","ska","Bass · bandleader","1934–2008 · Jamaican","Bandleader who took ska uptown.","A bassist and bandleader whose Dragonaires brought ska to international stages and who became a major industry figure.",[["1964","Jamaica Ska",""]]),
+n("jimmycliff","Jimmy Cliff","roots","Vocals","b.1948 · Jamaican","The face of reggae's rise.","A singer, songwriter, and star of 'The Harder They Come,' the film and soundtrack that introduced reggae to the world.",[["1972","The Harder They Come",""],["1969","Wonderful World, Beautiful People",""]]),
+n("tootshibbert","Toots Hibbert","roots","Vocals","1942–2020 · Jamaican","The man who named reggae.","The gospel-fired voice of Toots and the Maytals, whose 1968 'Do the Reggay' gave the music its name.",[["1973","Funky Kingston",""]]),
+n("altonellis","Alton Ellis","rocksteady","Vocals","1938–2008 · Jamaican","'The Godfather of Rocksteady.'","A singer of aching tenderness whose 'Get Ready – Rock Steady' helped name and define the rocksteady era.",[["1967","Mr. Soul of Jamaica",""]]),
+n("kenboothe","Ken Boothe","rocksteady","Vocals","b.1948 · Jamaican","Rocksteady's soulful tenor.","A powerful, soul-influenced singer whose 'Everything I Own' topped the UK charts and who remains a rocksteady giant.",[["1971","Mr. Rock Steady",""]]),
+n("johnholt","John Holt","rocksteady","Vocals","1947–2014 · Jamaican","Velvet voice of the Paragons.","The lead singer of the Paragons ('The Tide Is High') and a beloved solo balladeer across rocksteady and reggae.",[["1973","1000 Volts of Holt",""]]),
+n("theparagons","The Paragons","rocksteady","Band","est.1964 · Jamaican","Harmony kings of rocksteady.","A close-harmony vocal trio, led by John Holt, whose 'The Tide Is High' became a global standard.",[["1967","On the Beach",""]]),
+n("heptones","The Heptones","rocksteady","Band","est.1965 · Jamaican","Studio One's harmony masters.","A revered vocal trio, anchored by Leroy Sibbles, whose harmonies defined the Studio One sound of rocksteady and roots.",[["1976","Night Food",""]]),
+n("leroysibbles","Leroy Sibbles","rocksteady","Vocals · bass","b.1949 · Jamaican","Voice and bass of Studio One.","The lead Heptone and Studio One's house bassist, whose basslines underpin countless classic riddims.",[["1982","Mean While",""]]),
+n("delroywilson","Delroy Wilson","rocksteady","Vocals","1948–1995 · Jamaican","Child star turned rocksteady great.","A singer who began as a child at Studio One and matured into one of rocksteady and reggae's most loved voices.",[["1976","Sarge",""]]),
+n("phyllisdillon","Phyllis Dillon","rocksteady","Vocals","1944–2004 · Jamaican","'The Queen of Rocksteady.'","Treasure Isle's leading female voice, whose cool, elegant singing graced some of rocksteady's finest sides.",[["1967","One Life to Live",""]]),
+n("hoptonlewis","Hopeton Lewis","rocksteady","Vocals","1947–2014 · Jamaican","Helped slow ska into rocksteady.","A singer whose relaxed 1966 'Take It Easy' is often cited as a first rocksteady record.",[["1970","Grooving Out on Life",""]]),
+n("bobandy","Bob Andy","rocksteady","Vocals · songwriter","1944–2020 · Jamaican","Reggae's great songwriter.","A profound singer-songwriter (Studio One, Bob & Marcia) whose compositions are pillars of the Jamaican songbook.",[["1970","Song Book",""]]),
+n("marciagriffiths","Marcia Griffiths","roots","Vocals","b.1949 · Jamaican","'The Empress of Reggae.'","A singer from Studio One and Bob & Marcia who became an I-Three behind Bob Marley and a beloved solo star.",[["1978","Naturally",""]]),
+n("slimsmith","Slim Smith","rocksteady","Vocals","1948–1973 · Jamaican","A voice of fragile beauty.","The soaring lead of the Techniques and the Uniques, whose intense singing influenced a generation before his early death.",[["1968","Born to Love",""]]),
+n("kingtubby","King Tubby","dub","Engineer · dub pioneer","1941–1989 · Jamaican","The inventor of dub.","An electronics genius whose remixing at the mixing desk — drop-outs, reverb, echo — created dub and reshaped modern music.",[["1976","King Tubbys Meets Rockers Uptown",""]]),
+n("leeperry","Lee \"Scratch\" Perry","dub","Producer · Black Ark","1936–2021 · Jamaican","Reggae's mad genius producer.","The visionary, eccentric producer of the Black Ark studio whose surreal soundscapes shaped roots, dub, and the early Wailers.",[["1976","Super Ape",""]]),
+n("bunnylee","Bunny \"Striker\" Lee","dub","Producer","1941–2020 · Jamaican","The hit-flying producer.","A prolific, influential producer who pioneered the 'flying cymbal' sound and worked with King Tubby and countless singers.",[["1970s","Bunny Lee productions",""]]),
+n("niney","Niney the Observer","dub","Producer","b.1944 · Jamaican","Roots producer of 'Blood and Fire.'","A producer and singer whose stark, militant roots productions (and Dennis Brown work) defined 1970s reggae.",[["1973","Blood and Fire",""]]),
+n("joegibbs","Joe Gibbs","dub","Producer","1942–2008 · Jamaican","Hitmaker of the roots era.","A major producer whose studio, with engineer Errol Thompson, turned out era-defining roots and the African Dub series.",[["1978","African Dub All-Mighty Chapter 3",""]]),
+n("augustuspablo","Augustus Pablo","dub","Melodica · keyboards","1953–1999 · Jamaican","The melodica's haunting voice.","A keyboardist and producer whose melodica gave dub its eerie, 'Far East' sound, most famously on 'King Tubbys Meets Rockers Uptown.'",[["1976","King Tubbys Meets Rockers Uptown",""]]),
+n("scientist","Scientist","dub","Engineer · dub","b.1960 · Jamaican","King Tubby's brilliant heir.","An engineer who, mentored by King Tubby, took dub to new heights with playful, sci-fi-titled mixing classics.",[["1981","Scientist Rids the World of the Evil Curse of the Vampires",""]]),
+n("kingjammy","King Jammy","digital","Producer · digital","b.1947 · Jamaican","Architect of digital dancehall.","A King Tubby protégé whose 1985 'Under Mi Sleng Teng' launched the computerized digital era of dancehall.",[["1985","Sleng Teng riddim",""]]),
+n("slyrobbie","Sly & Robbie","dub","Drums & bass · production","est.1975 · Jamaican","Reggae's master rhythm section.","Drummer Sly Dunbar and bassist Robbie Shakespeare, the most recorded rhythm section in reggae, who powered and produced countless classics.",[["1985","Language Barrier",""]]),
+n("familyman","Aston \"Family Man\" Barrett","roots","Bass","1946–2024 · Jamaican","The bedrock of the Wailers.","The bassist and musical director of Bob Marley's Wailers, whose deep, melodic lines anchored reggae's most famous band.",[["1977","with The Wailers",""]]),
+n("carltonbarrett","Carlton Barrett","roots","Drums","1950–1987 · Jamaican","Inventor of the 'one drop.'","The Wailers' drummer, credited with the 'one drop' rhythm at the heart of roots reggae.",[["1977","with The Wailers",""]]),
+n("jackiemittoo","Jackie Mittoo","ska","Keyboards","1948–1990 · Jamaican","The keyboard soul of Studio One.","A Skatalite and Studio One's musical director, an organ master whose instrumentals and arrangements shaped the label's sound.",[["1969","Evening Time",""]]),
+n("bobmarley","Bob Marley","roots","Vocals · songwriter","1945–1981 · Jamaican","Reggae's global prophet.","The singer, songwriter, and Rastafari icon who carried reggae and its message of liberation to every corner of the earth.",[["1977","Exodus",""],["1973","Catch a Fire",""]]),
+n("petertosh","Peter Tosh","roots","Vocals · guitar","1944–1987 · Jamaican","The militant Wailer.","A founding Wailer and fierce solo voice whose 'Legalize It' and 'Equal Rights' made him reggae's uncompromising firebrand.",[["1977","Equal Rights",""]]),
+n("bunnywailer","Bunny Wailer","roots","Vocals","1947–2021 · Jamaican","The mystic Wailer.","A founding Wailer whose solo masterpiece 'Blackheart Man' is among roots reggae's deepest statements.",[["1976","Blackheart Man",""]]),
+n("burningspear","Burning Spear","roots","Vocals","b.1945 · Jamaican","The voice of Marcus Garvey.","Winston Rodney, whose hypnotic, Garvey-inspired roots reggae ('Marcus Garvey') is among the music's most spiritual.",[["1975","Marcus Garvey",""]]),
+n("dennisbrown","Dennis Brown","roots","Vocals","1957–1999 · Jamaican","'The Crown Prince of Reggae.'","A prodigiously gifted singer, Bob Marley's favorite, whose silky voice spanned rocksteady, roots, and lovers rock.",[["1978","Visions of Dennis Brown",""]]),
+n("uroy","U-Roy","roots","Deejay","1942–2021 · Jamaican","The originator of toasting.","'The Originator' — the deejay whose toasting over Duke Reid's riddims invented the vocal style that would become rap and dancehall.",[["1975","Dread in a Babylon",""]]),
+n("iroy","I-Roy","roots","Deejay","1944–1999 · Jamaican","Witty wordsmith of the mic.","A literate, quick-tongued deejay whose toasting and famous clashes enlivened the roots era.",[["1973","Presenting I-Roy",""]]),
+n("bigyouth","Big Youth","roots","Deejay","b.1949 · Jamaican","Dreadlocked voice of Rasta toasting.","A hugely influential deejay whose Rastafari-conscious chanting ('Screaming Target') defined the roots-era DJ.",[["1973","Screaming Target",""]]),
+n("dillinger","Dillinger","roots","Deejay","b.1953 · Jamaican","Deejay of 'Cokane in My Brain.'","A popular deejay of the 1970s whose 'Cokane in My Brain' became an international hit.",[["1976","CB 200",""]]),
+n("princefari","Prince Far I","roots","Deejay · chanter","1944–1983 · Jamaican","The 'Voice of Thunder.'","A deep-voiced chanter whose grave, sermon-like delivery made his roots and dub records hypnotically powerful.",[["1977","Message from the King",""]]),
+n("tappazukie","Tapper Zukie","roots","Deejay · producer","b.1955 · Jamaican","Deejay embraced by punk.","A deejay and producer whose 'MPLA' and championing by the UK punk scene bridged reggae and punk.",[["1976","MPLA",""]]),
+n("culture","Culture","roots","Band","est.1976 · Jamaican","Prophets of 'Two Sevens Clash.'","Joseph Hill's harmony trio, whose apocalyptic 'Two Sevens Clash' is one of roots reggae's defining albums.",[["1977","Two Sevens Clash",""]]),
+n("abyssinians","The Abyssinians","roots","Band","est.1968 · Jamaican","Authors of 'Satta Massagana.'","A harmony group whose hymn-like 'Satta Massagana' became roots reggae's most beloved anthem.",[["1976","Satta Massagana",""]]),
+n("mightydiamonds","The Mighty Diamonds","roots","Band","est.1969 · Jamaican","Sweet harmonies of militant roots.","A harmony trio whose 'Right Time' married gorgeous singing to militant roots, a cornerstone of the era.",[["1976","Right Time",""]]),
+n("blackuhuru","Black Uhuru","roots","Band","est.1972 · Jamaican","Roots powered by Sly & Robbie.","A vocal group who, driven by Sly & Robbie, brought roots reggae into the 1980s and won reggae's first Grammy.",[["1980","Sinsemilla",""]]),
+n("israelvibration","Israel Vibration","roots","Band","est.1976 · Jamaican","Harmony born of adversity.","A trio who met in a polio rehabilitation home and forged some of roots reggae's most affecting harmonies.",[["1978","The Same Song",""]]),
+n("wailingsouls","The Wailing Souls","roots","Band","est.1968 · Jamaican","Veteran harmony survivors.","A long-running harmony group, Studio One alumni, whose tight singing endured from rocksteady into the dancehall age.",[["1981","Wild Suspense",""]]),
+n("congos","The Congos","roots","Band","est.1975 · Jamaican","Lee Perry's celestial harmonies.","A vocal group whose 'Heart of the Congos,' produced by Lee Perry, is a dense, otherworldly roots masterpiece.",[["1977","Heart of the Congos",""]]),
+n("maxromeo","Max Romeo","roots","Vocals","b.1944 · Jamaican","From rude songs to roots fire.","A singer whose 'War Ina Babylon,' produced by Lee Perry, is a roots classic of righteous defiance.",[["1976","War Ina Babylon",""]]),
+n("horaceandy","Horace Andy","roots","Vocals","b.1951 · Jamaican","The quavering voice of 'Skylarking.'","A singer of unmistakable tremulous tone, beloved in roots and later as the voice of Massive Attack.",[["1972","Skylarking",""]]),
+n("gregoryisaacs","Gregory Isaacs","roots","Vocals","1951–2010 · Jamaican","'The Cool Ruler.'","A singer of effortless cool whose tender, sufferer's voice ('Night Nurse') made him reggae's great lover and rude boy.",[["1982","Night Nurse",""]]),
+n("johnnyclarke","Johnny Clarke","roots","Vocals","b.1955 · Jamaican","Bunny Lee's roots star.","A singer who, with producer Bunny Lee and King Tubby, defined the militant 'flying cymbals' roots sound of the mid-70s.",[["1976","Authorized Version",""]]),
+n("juniormurvin","Junior Murvin","roots","Vocals","1946–2013 · Jamaican","The falsetto of 'Police and Thieves.'","A singer whose Lee Perry-produced 'Police and Thieves,' in a soaring falsetto, became a roots and punk-era anthem.",[["1977","Police & Thieves",""]]),
+n("ijahmanlevi","Ijahman Levi","roots","Vocals","b.1946 · Jamaican","Mystic of extended roots.","A singer of long, meditative, deeply spiritual roots songs that stand apart for their ambition.",[["1978","Haile I Hymn",""]]),
+n("judymowatt","Judy Mowatt","roots","Vocals","b.1952 · Jamaican","An I-Three and solo pioneer.","A member of the I-Threes behind Bob Marley whose 'Black Woman' was a landmark for women in roots reggae.",[["1979","Black Woman",""]]),
+n("ritamarley","Rita Marley","roots","Vocals","b.1946 · Cuban-Jamaican","I-Three and keeper of the legacy.","A singer, I-Three, and Bob Marley's wife, who sustained the Marley legacy and her own career.",[["1981","Who Feels It Knows It",""]]),
+n("freddiemcgregor","Freddie McGregor","roots","Vocals","b.1956 · Jamaican","Studio One child to roots elder.","A singer who began at Studio One as a boy and matured into a versatile roots and lovers-rock mainstay.",[["1979","Bobby Bobylon",""]]),
+n("sugarminott","Sugar Minott","roots","Vocals · producer","1956–2010 · Jamaican","Bridge from roots to dancehall.","A singer and producer whose Youth Promotion label and 'Good Thing Going' helped birth dancehall from the roots tradition.",[["1979","Live Loving",""]]),
+n("ericdonaldson","Eric Donaldson","roots","Vocals","b.1947 · Jamaican","Festival-song king.","A falsetto singer whose 'Cherry Oh Baby' (covered by the Rolling Stones and UB40) made him a Jamaican institution.",[["1971","Cherry Oh Baby",""]]),
+n("cornellcampbell","Cornell Campbell","roots","Vocals","b.1945 · Jamaican","Falsetto stylist of the Eternals.","A sweet-voiced singer, from Studio One to Bunny Lee's roots productions, with a distinctive high tenor.",[["1976","The Gorgon",""]]),
+n("johnnyosbourne","Johnny Osbourne","roots","Vocals","b.1948 · Jamaican","Roots voice who ruled the dancehall.","A singer whose 'Truths and Rights' and dancehall smashes like 'Buddy Bye' made him a perennial favorite.",[["1980","Truths and Rights",""]]),
+n("linvalthompson","Linval Thompson","roots","Vocals · producer","b.1954 · Jamaican","Singer-producer of heavy roots.","A singer and prolific producer whose thick, bass-heavy roots productions defined a late-70s sound.",[["1976","Don't Cut Off Your Dreadlocks",""]]),
+n("thirdworld","Third World","roots","Band","est.1973 · Jamaican","Reggae's crossover ambassadors.","A polished band who fused reggae with soul and funk ('Now That We Found Love') and took the music to global pop stages.",[["1978","Journey to Addis",""]]),
+n("steelpulse","Steel Pulse","roots","Band","est.1975 · British","Britain's roots torchbearers.","A Birmingham band whose 'Handsworth Revolution' brought a fierce, Rasta-conscious roots reggae out of Britain.",[["1978","Handsworth Revolution",""]]),
+n("aswad","Aswad","roots","Band","est.1975 · British","London's roots and lovers band.","A pioneering British reggae band who moved from militant roots to chart-topping lovers rock.",[["1981","New Chapter",""]]),
+n("innercircle","Inner Circle","roots","Band","est.1968 · Jamaican","Reggae's global hitmakers.","A band whose later hits ('Bad Boys,' 'Sweat') made them one of reggae's most internationally successful acts.",[["1992","Bad to the Bone",""]]),
+n("theupsetters","The Upsetters","dub","Band","est.1968 · Jamaican","Lee Perry's house band.","Lee Perry's studio band, the engine of the Black Ark, whose instrumentals and dubs are foundational.",[["1973","Blackboard Jungle Dub",""]]),
+n("madprofessor","Mad Professor","dub","Engineer · dub","b.1955 · British-Guyanese","UK dub's mad scientist.","A London engineer and producer (Ariwa) who carried King Tubby's dub science into the digital age, from Lee Perry to Massive Attack.",[["1995","No Protection",""]]),
+n("adriansherwood","Adrian Sherwood","dub","Producer","b.1958 · British","On-U Sound's dub visionary.","A British producer whose On-U Sound label fused dub with post-punk and industrial music into something wholly new.",[["1981","On-U Sound productions",""]]),
+n("mikeydread","Mikey Dread","dub","Vocals · producer","1954–2008 · Jamaican","Radio dread turned dub auteur.","A radio DJ, singer, and producer whose 'Dread at the Controls' and work with The Clash spread dub's reach.",[["1979","African Anthem",""]]),
+n("rootsradics","Roots Radics","dancehall","Band","est.1978 · Jamaican","The band that built early dancehall.","The studio band whose stripped, heavy rhythms powered the early-80s dancehall era, often mixed by Scientist.",[["1982","with Scientist",""]]),
+n("deanfraser","Dean Fraser","contemporary","Saxophone","b.1957 · Jamaican","Reggae's saxophone voice.","The most recorded saxophonist in reggae and a key producer-arranger behind decades of Jamaican hits.",[["1978","with Joe Gibbs",""]]),
+n("barringtonlevy","Barrington Levy","dancehall","Vocals","b.1964 · Jamaican","Dancehall's golden-voiced teen star.","A singer whose powerful voice and hits ('Here I Come') made him a defining star of the early dancehall era.",[["1985","Here I Come",""]]),
+n("yellowman","Yellowman","dancehall","Deejay","b.1956 · Jamaican","Dancehall's first superstar.","An albino deejay whose slack wit and charisma made him the biggest star of early dancehall and its first crossover act.",[["1982","Mister Yellowman",""]]),
+n("eekamouse","Eek-A-Mouse","dancehall","Deejay","b.1957 · Jamaican","The 'sing-jay' original.","A towering deejay whose 'biddy-biddy-bong' sing-song style ('Wa-Do-Dem') created a whole new vocal approach.",[["1981","Wa-Do-Dem",""]]),
+n("joseywales","Josey Wales","dancehall","Deejay","b.1959 · Jamaican","The 'Outlaw' of the Volcano.","A commanding deejay of the Volcano sound system whose cultural lyricism defined mid-80s dancehall.",[["1983","The Outlaw Josey Wales",""]]),
+n("charliechaplin","Charlie Chaplin","dancehall","Deejay","b.1959 · Jamaican","Conscious voice of the dancehall.","A deejay known for cultural, conscious lyrics who, with Josey Wales, ruled the early-80s sound-system scene.",[["1983","Presenting Charlie Chaplin",""]]),
+n("brigadierjerry","Brigadier Jerry","dancehall","Deejay","b.1957 · Jamaican","The live-dance legend.","A revered Rastafarian deejay of the Jah Love sound, more legend on the mic than on record.",[["1985","Jamaica Jamaica",""]]),
+n("frankiepaul","Frankie Paul","dancehall","Vocals","1965–2017 · Jamaican","'The Jamaican Stevie Wonder.'","A blind, prolific singer of huge range whose voice graced countless dancehall and lovers hits.",[["1984","Pass the Tu-Sheng-Peng",""]]),
+n("halfpint","Half Pint","dancehall","Vocals","b.1961 · Jamaican","Voice of 'Greetings.'","A singer whose 'Greetings' and 'Winsome' (covered by the Rolling Stones) became dancehall standards.",[["1985","Victory",""]]),
+n("tenorsaw","Tenor Saw","dancehall","Vocals","1966–1988 · Jamaican","The haunting voice of 'Ring the Alarm.'","A singer whose 'Ring the Alarm' bridged dancehall and the digital age before his death at 22.",[["1985","Fever",""]]),
+n("nittygritty","Nitty Gritty","digital","Vocals","1957–1991 · Jamaican","Early digital's plaintive cry.","A singer whose distinctive whine ('Hog Inna Minty') was among the first voices of the digital era.",[["1986","Turbo Charged",""]]),
+n("coccotea","Cocoa Tea","dancehall","Vocals","b.1959 · Jamaican","Smooth voice across the eras.","A mellifluous singer whose hits ('Rocking Dolly,' 'Holy Mount Zion') spanned dancehall and digital.",[["1985","Weh Dem A Go Do",""]]),
+n("admiralbailey","Admiral Bailey","digital","Deejay","b.1963 · Jamaican","Chant-along digital deejay.","A deejay whose anthemic, crowd-chanting hits ('Punanny,' 'Big Belly Man') defined the late-80s King Jammy sound.",[["1987","Born Free",""]]),
+n("waynesmith","Wayne Smith","digital","Vocals","1965–2014 · Jamaican","Voice of 'Under Mi Sleng Teng.'","The singer whose 1985 'Under Mi Sleng Teng,' built on a computer preset, launched the digital revolution.",[["1985","Sleng Teng",""]]),
+n("shabbaranks","Shabba Ranks","digital","Deejay","b.1966 · Jamaican","Ragga's first global superstar.","A gruff-voiced deejay who won dancehall's first two Grammys and broke ragga into the international mainstream.",[["1991","As Raw as Ever",""]]),
+n("supercat","Super Cat","digital","Deejay","b.1963 · Jamaican","'The Don Dada' of ragga.","A stylish deejay whose 'Ghetto Red Hot' and hip-hop crossovers made him a 90s ragga icon.",[["1992","Don Dada",""]]),
+n("ninjaman","Ninjaman","digital","Deejay","b.1966 · Jamaican","The 'Gorgon' of live clashes.","A deejay famed for fearsome sound-clash improvisation, one of dancehall's great live performers.",[["1991","Reggae Sunsplash sets",""]]),
+n("cuttyranks","Cutty Ranks","digital","Deejay","b.1965 · Jamaican","Ragga's rapid-fire chatter.","A former butcher turned deejay whose hard-edged, fast style ('Limb by Limb') made him an early-90s force.",[["1991","The Stopper",""]]),
+n("beenieman","Beenie Man","digital","Deejay","b.1973 · Jamaican","'The King of the Dancehall.'","A child-prodigy deejay who became dancehall's enduring king, scoring global hits across three decades.",[["1997","Many Moods of Moses",""]]),
+n("bountykiller","Bounty Killer","digital","Deejay","b.1972 · Jamaican","'The Warlord' of the ghetto.","A ferocious deejay and mentor whose 'poor people's governor' lyrics and gravel voice defined 90s dancehall.",[["1996","My Xperience",""]]),
+n("capleton","Capleton","digital","Deejay","b.1967 · Jamaican","'The Fireman' of Bobo Ashanti.","A deejay who turned from slackness to fiery Rastafari 'fire' chants, a leader of the conscious dancehall wave.",[["1995","Prophecy",""]]),
+n("sizzla","Sizzla","digital","Deejay · vocals","b.1976 · Jamaican","Prolific prophet of conscious ragga.","A Bobo Ashanti deejay-singer of astonishing output and intensity, central to the late-90s Rastafari renaissance.",[["1997","Black Woman & Child",""]]),
+n("anthonyb","Anthony B","digital","Deejay","b.1976 · Jamaican","Militant voice of the revival.","A fiery, conscious deejay ('Fire Pon Rome') who, with Sizzla and Capleton, led the 90s roots-and-culture revival.",[["1996","Real Revolutionary",""]]),
+n("ladysaw","Lady Saw","digital","Deejay","b.1972 · Jamaican","'The Queen of the Dancehall.'","The first female dancehall deejay to win a Grammy, fearless and bawdy, who later became gospel singer Marion Hall.",[["1994","Lover Girl",""]]),
+n("garnettsilk","Garnett Silk","digital","Vocals","1966–1994 · Jamaican","The voice that revived roots.","A singer of profound spiritual warmth whose brief career reignited conscious singing before his death at 28.",[["1992","It's Growing",""]]),
+n("tonyrebel","Tony Rebel","digital","Deejay","b.1962 · Jamaican","Cultural deejay and festival founder.","A conscious deejay ('Fresh Vegetable') and founder of the Rebel Salute festival, a steady voice of culture.",[["1993","Vibes of the Time",""]]),
+n("bujubanton","Buju Banton","digital","Deejay · vocals","b.1973 · Jamaican","From dancehall ruler to roots prophet.","A gravel-voiced deejay whose 'Til Shiloh' transformed him from dancehall star into a towering roots artist.",[["1995","'Til Shiloh",""]]),
+n("luciano","Luciano","digital","Vocals","b.1964 · Jamaican","'The Messenjah' of modern roots.","A warm-voiced singer ('It's Me Again Jah') who carried the roots-reggae torch through the digital age.",[["1995","Where There Is Life",""]]),
+n("chakademus","Chaka Demus & Pliers","digital","Vocals · deejay","est.1992 · Jamaican","Ragga's global chart-toppers.","A deejay-and-singer duo whose 'Murder She Wrote' and 'Tease Me' became worldwide ragga-pop smashes.",[["1993","Tease Me",""]]),
+n("dawnpenn","Dawn Penn","digital","Vocals","b.1952 · Jamaican","Voice of 'No, No, No.'","A rocksteady singer whose 1994 digital remake of 'You Don't Love Me (No, No, No)' became a global hit.",[["1994","No, No, No",""]]),
+n("michaelrose","Michael Rose","digital","Vocals","b.1957 · Jamaican","Lead voice of Black Uhuru.","The distinctive singer who fronted Black Uhuru's Grammy-winning years before a strong solo career.",[["1990","Proud",""]]),
+n("spraggabenz","Spragga Benz","digital","Deejay","b.1969 · Jamaican","Sharp lyricist of the 90s.","A clever, versatile deejay ('Jack It Up') and actor who bridged hardcore dancehall and crossover.",[["1995","Uncommonly Smooth",""]]),
+n("pinchers","Pinchers","dancehall","Vocals","b.1965 · Jamaican","Hit-maker of late-80s dancehall.","A singer whose string of late-80s hits ('Agony,' 'Bandelero') made him a dancehall mainstay.",[["1987","Agony",""]]),
+n("littlejohn","Little John","dancehall","Deejay","b.1970 · Jamaican","The original child deejay star.","A prodigy who, barely a teenager, became one of the most recorded voices of the mid-80s dancehall.",[["1984","Boombox",""]]),
+n("steelyclevie","Steely & Clevie","digital","Producers","est.1982 · Jamaican","Architects of digital riddims.","Wycliffe 'Steely' Johnson and Cleveland 'Clevie' Browne, the keyboard-and-drum duo whose programmed riddims powered the digital era.",[["1989","Steely & Clevie productions",""]]),
+n("gussieclarke","Gussie Clarke","digital","Producer","b.1953 · Jamaican","Producer from roots to digital.","A producer whose Music Works studio bridged roots and slick digital dancehall ('Telephone Love').",[["1989","Music Works productions",""]]),
+n("bobbydigital","Bobby Digital","digital","Producer","1961–2020 · Jamaican","Digital dancehall hitmaker.","A King Jammy protégé whose Digital B label produced a run of major dancehall and conscious hits.",[["1990","Digital B productions",""]]),
+n("shaggy","Shaggy","contemporary","Deejay · vocals","b.1968 · Jamaican","Reggae's diamond-selling crossover.","A deejay-singer whose 'Boombastic' and 'It Wasn't Me' made him one of the best-selling reggae artists ever.",[["2000","Hot Shot",""]]),
+n("seanpaul","Sean Paul","contemporary","Deejay","b.1973 · Jamaican","Dancehall's global pop ambassador.","A Grammy-winning deejay whose smooth crossover hits ('Get Busy,' 'Temperature') took dancehall to the top of world charts.",[["2002","Dutty Rock",""]]),
+n("jacobmiller","Jacob Miller","roots","Vocals","1952–1980 · Jamaican","The exuberant voice of Inner Circle.","A charismatic singer who fronted Inner Circle and cut beloved solo roots sides before his death at 27.",[["1978","Tenement Yard",""]]),
+n("winstonriley","Winston Riley","roots","Producer","1943–2012 · Jamaican","Creator of the 'Stalag' riddim.","A singer-turned-producer (the Techniques) whose 'Stalag' riddim became one of the most versioned in reggae.",[["1973","Techniques label productions",""]]),
+n("errolthompson","Errol Thompson","dub","Engineer","1948–2004 · Jamaican","The 'ET' behind Joe Gibbs.","A pioneering engineer whose partnership with Joe Gibbs produced the African Dub series and a defining roots sound.",[["1978","African Dub series",""]]),
+n("donovangermain","Donovan Germain","digital","Producer","b.1953 · Jamaican","Penthouse's polished hitmaker.","A producer whose Penthouse label launched Buju Banton and refined the conscious dancehall sound of the 90s.",[["1992","Penthouse productions",""]]),
+n("lintonkwesi","Linton Kwesi Johnson","dub","Dub poet","b.1952 · Jamaican-British","The founder of dub poetry.","A British-Jamaican poet whose verse over Dennis Bovell's dub ('Bass Culture') created dub poetry and a voice for Black Britain.",[["1980","Bass Culture",""]]),
+n("mutabaruka","Mutabaruka","roots","Dub poet","b.1952 · Jamaican","Barefoot prophet of dub poetry.","A fierce Jamaican dub poet and broadcaster whose spoken-word records ('Check It!') carry uncompromising Rastafari fire.",[["1983","Check It!",""]]),
+n("dennisbovell","Dennis Bovell","dub","Producer · bass","b.1953 · Barbadian-British","Architect of British lovers rock and dub.","A producer, bassist, and dub master (Matumbi) who shaped lovers rock and backed Linton Kwesi Johnson.",[["1979","Brain Damage",""]]),
+n("janetkay","Janet Kay","contemporary","Vocals","b.1958 · British","The queen of lovers rock.","A British singer whose 'Silly Games' was lovers rock's defining crossover hit and a UK chart smash.",[["1979","Silly Games",""]]),
+n("maxipriest","Maxi Priest","contemporary","Vocals","b.1961 · British","Lovers rock goes global.","A British singer whose smooth voice ('Close to You,' 'Wild World') made him reggae's great pop-soul crossover.",[["1990","Bonafide",""]]),
+n("ub40","UB40","contemporary","Band","est.1978 · British","Reggae's biggest-selling band.","A multiracial Birmingham band whose covers ('Red Red Wine') and originals made them one of the best-selling reggae acts worldwide.",[["1983","Labour of Love",""]]),
+n("mistyinroots","Misty in Roots","roots","Band","est.1975 · British","Britain's militant roots collective.","A London roots band, beloved of the Rock Against Racism era, whose live album is a British roots classic.",[["1979","Live at the Counter Eurovision 79",""]]),
+n("smileyculture","Smiley Culture","dancehall","Deejay","1963–2011 · British","Voice of 'Cockney Translation.'","A British deejay whose witty 'Cockney Translation' and 'Police Officer' captured Black British life in the fast-chat style.",[["1986","Tongue in Cheek",""]]),
+n("damianmarley","Damian Marley","contemporary","Deejay · vocals","b.1978 · Jamaican","'Jr. Gong' and global heir.","Bob Marley's youngest son, a Grammy-winning deejay-singer whose 'Welcome to Jamrock' bridged roots and hip-hop.",[["2005","Welcome to Jamrock",""]]),
+n("stephenmarley","Stephen Marley","contemporary","Vocals · producer","b.1972 · Jamaican","The producer-son.","A Marley son, multiple Grammy winner, and the producer behind much of the family's modern output.",[["2007","Mind Control",""]]),
+n("ziggymarley","Ziggy Marley","contemporary","Vocals","b.1968 · Jamaican","Eldest keeper of the flame.","Bob Marley's eldest son, who led the Melody Makers and built a Grammy-laden solo career carrying the message forward.",[["1988","Conscious Party",""]]),
+n("protoje","Protoje","contemporary","Vocals · deejay","b.1981 · Jamaican","Standard-bearer of the reggae revival.","A singer-deejay whose sharp writing and In.Digg.Nation collective helped lead Jamaica's 2010s 'reggae revival.'",[["2018","A Matter of Time",""]]),
+n("chronixx","Chronixx","contemporary","Vocals","b.1992 · Jamaican","Young prophet of the revival.","A singer whose roots-conscious songs ('Here Comes Trouble,' 'Chronology') made him the face of the reggae revival.",[["2017","Chronology",""]]),
+n("koffee","Koffee","contemporary","Vocals · deejay","b.2000 · Jamaican","The youngest reggae Grammy winner.","A prodigious singer-deejay whose 'Toast' and EP 'Rapture' made her, at 19, the youngest and first woman to win the reggae Grammy.",[["2019","Rapture",""]]),
+n("tarrusriley","Tarrus Riley","contemporary","Vocals","b.1979 · American-Jamaican","Modern roots romantic.","A singer ('She's Royal'), son of Jimmy Riley, whose work with Dean Fraser made him a contemporary roots staple.",[["2009","Contagious",""]]),
+n("romainvirgo","Romain Virgo","contemporary","Vocals","b.1990 · Jamaican","Smooth voice of new roots.","A singing-competition winner turned acclaimed modern roots and lovers singer.",[["2010","Romain Virgo",""]]),
+n("jahcure","Jah Cure","contemporary","Vocals","b.1978 · Jamaican","Soulful voice of modern reggae.","A singer whose smooth, emotive hits ('Longing For,' 'Unconditional Love') made him a contemporary star.",[["2007","True Reflections",""]]),
+n("alborosie","Alborosie","contemporary","Vocals · producer","b.1977 · Italian-Jamaican","Italy's roots transplant.","An Italian-born singer-producer who relocated to Jamaica and built a vintage, self-produced roots sound.",[["2008","Soul Pirate",""]]),
+n("gentleman","Gentleman","contemporary","Vocals","b.1974 · German","Germany's roots ambassador.","A German singer deeply embraced in Jamaica whose conscious roots albums made him a European reggae figurehead.",[["2002","Journey to Jah",""]]),
+n("vybzkartel","Vybz Kartel","contemporary","Deejay","b.1976 · Jamaican","'World Boss' of modern dancehall.","The most influential dancehall deejay of his generation, a prolific lyricist whose style reshaped the genre.",[["2003","Up 2 Di Time",""]]),
+n("popcaan","Popcaan","contemporary","Deejay","b.1988 · Jamaican","Melodic king of new dancehall.","A Vybz Kartel protégé whose melodic, atmospheric dancehall ('Unruly') made him a global crossover force.",[["2014","Where We Come From",""]]),
+n("spice","Spice","contemporary","Deejay","b.1982 · Jamaican","'Queen of the Dancehall.'","A bold, charismatic deejay and performer who became the reigning female star of modern dancehall.",[["2021","10",""]]),
+n("mavado","Mavado","contemporary","Deejay","b.1981 · Jamaican","The 'Gully' star.","A Bounty Killer protégé whose melodic 'gully' style and rivalry with Vybz Kartel defined late-2000s dancehall.",[["2007","Gangsta for Life",""]]),
+n("jesseroyal","Jesse Royal","contemporary","Vocals","b.1989 · Jamaican","Rootsy voice of the new wave.","A singer of the reggae revival whose rebel-rootsy songs ('Modern Day Judas') won a devoted following.",[["2017","Lily of Da Valley",""]]),
+n("morganheritage","Morgan Heritage","contemporary","Band","est.1994 · American-Jamaican","'The Royal Family of Reggae.'","A Grammy-winning family band whose modern roots anthems ('Don't Haffi Dread') bridged generations.",[["1999","Don't Haffi Dread",""]]),
+n("richiespice","Richie Spice","contemporary","Vocals","b.1971 · Jamaican","Conscious modern roots voice.","A singer whose grounded, conscious hits ('Earth a Run Red') made him a 2000s roots favorite.",[["2004","Spice in Your Life",""]]),
+n("queenifrica","Queen Ifrica","contemporary","Vocals · deejay","b.1975 · Jamaican","Outspoken voice of conscious reggae.","A singer-deejay, daughter of ska great Derrick Morgan, known for socially fearless songs ('Lioness on the Rise').",[["2009","Montego Bay",""]]),
+n("etana","Etana","contemporary","Vocals","b.1983 · Jamaican","'The Strong One.'","A soulful singer whose grounded, womanly roots ('I Am Not Afraid') made her a leading contemporary voice.",[["2008","The Strong One",""]]),
+n("busysignal","Busy Signal","contemporary","Deejay","b.1979 · Jamaican","Versatile modern dancehall ace.","A deejay of remarkable range whose hits span hardcore dancehall and melodic crossover ('Come Over').",[["2012","Reggae Music Again",""]]),
+n("lilaike","Lila Iké","contemporary","Vocals","b.1993 · Jamaican","Soulful new voice of the revival.","A singer of the In.Digg.Nation collective whose soul-tinged reggae ('Where I'm Coming From') marks her as a rising star.",[["2020","The ExPerience",""]]),
+n("jah9","Jah9","contemporary","Vocals","b.1983 · Jamaican","Jazz-inflected 'rasta poetess.'","A singer whose 'jazz on dub' and yoga-rooted spirituality give modern roots a distinctive, meditative voice.",[["2013","New Name",""]]),
+n("kabakapyramid","Kabaka Pyramid","contemporary","Deejay · vocals","b.1985 · Jamaican","Lyrical heir of conscious reggae.","A Grammy-winning deejay-singer whose hip-hop-sharpened lyricism made him a leader of the revival.",[["2022","The Kalling",""]]),
+n("glenwashington","Glen Washington","contemporary","Vocals","b.1957 · Jamaican","Late-blooming roots crooner.","A drummer-turned-singer whose warm voice ('Brother to Brother') made him a beloved modern roots artist.",[["1998","Brother to Brother",""]]),
+n("jimmyriley","Jimmy Riley","roots","Vocals","1954–2016 · Jamaican","From the Uniques to lovers rock.","A singer (the Uniques, the Sensations) and father of Tarrus Riley whose lovers-rock hits spanned decades.",[["1982","Rydim Driven",""]]),
+];
+const e=(a,b,rel)=>({a,b,rel});
+const EDGES=[
+e("coxsone","skatalites","produced"),e("coxsone","altonellis","produced"),e("coxsone","heptones","produced"),e("coxsone","jackiemittoo","produced"),e("coxsone","burningspear","produced"),e("coxsone","bobandy","produced"),e("coxsone","delroywilson","produced"),e("coxsone","dukereid","rivals"),
+e("dukereid","altonellis","produced"),e("dukereid","johnholt","produced"),e("dukereid","phyllisdillon","produced"),e("dukereid","theparagons","produced"),e("dukereid","tommymccook","produced"),
+e("princebuster","derrickmorgan","rivals"),e("princebuster","coxsone","peer"),e("laurelaitken","princebuster","peer"),
+e("skatalites","dondrummond","member"),e("skatalites","tommymccook","member"),e("skatalites","rolandalphonso","member"),e("skatalites","jackiemittoo","member"),e("skatalites","ernestranglin","peer"),
+e("derrickmorgan","desmonddekker","mentored"),e("desmonddekker","jimmycliff","peer"),
+e("ernestranglin","milliesmall","recorded with"),e("byronlee","milliesmall","peer"),
+e("tootshibbert","jimmycliff","peer"),e("tootshibbert","bobmarley","peer"),
+e("altonellis","kenboothe","peer"),e("altonellis","delroywilson","mentored"),e("altonellis","hoptonlewis","peer"),e("altonellis","slimsmith","peer"),
+e("johnholt","theparagons","member"),e("heptones","leroysibbles","member"),e("leroysibbles","coxsone","recorded with"),
+e("bobandy","marciagriffiths","collaborated"),e("phyllisdillon","tommymccook","recorded with"),
+e("kingtubby","leeperry","peer"),e("kingtubby","scientist","mentored"),e("kingtubby","bunnylee","collaborated"),e("kingtubby","augustuspablo","collaborated"),e("kingtubby","kingjammy","mentored"),
+e("leeperry","bobmarley","produced"),e("leeperry","slyrobbie","peer"),
+e("bunnylee","johnholt","produced"),e("niney","dennisbrown","produced"),e("joegibbs","dennisbrown","produced"),
+e("slyrobbie","petertosh","recorded with"),e("slyrobbie","dukereid","recorded with"),
+e("familyman","bobmarley","member"),e("carltonbarrett","bobmarley","member"),e("familyman","carltonbarrett","bandmate"),
+e("bobmarley","petertosh","bandmate"),e("bobmarley","bunnywailer","bandmate"),e("petertosh","bunnywailer","bandmate"),
+e("bobmarley","marciagriffiths","recorded with"),e("dennisbrown","bobmarley","peer"),e("dennisbrown","coxsone","produced"),
+e("burningspear","coxsone","produced"),e("jimmycliff","bobmarley","peer"),
+e("uroy","dukereid","recorded with"),e("uroy","iroy","peer"),e("uroy","bigyouth","mentored"),
+e("iroy","dillinger","peer"),e("bigyouth","princefari","peer"),e("dillinger","leeperry","recorded with"),
+e("princefari","adriansherwood","collaborated"),e("tappazukie","bigyouth","peer"),
+e("culture","joegibbs","produced"),e("abyssinians","coxsone","produced"),e("mightydiamonds","slyrobbie","recorded with"),
+e("blackuhuru","slyrobbie","produced"),e("israelvibration","horaceandy","peer"),e("wailingsouls","coxsone","produced"),
+e("congos","leeperry","produced"),e("maxromeo","leeperry","produced"),
+e("horaceandy","coxsone","produced"),e("horaceandy","madprofessor","collaborated"),
+e("gregoryisaacs","slyrobbie","recorded with"),e("gregoryisaacs","sugarminott","peer"),
+e("johnnyclarke","bunnylee","produced"),e("johnnyclarke","kingtubby","recorded with"),
+e("juniormurvin","leeperry","produced"),e("ijahmanlevi","bobmarley","peer"),
+e("judymowatt","bobmarley","recorded with"),e("ritamarley","bobmarley","recorded with"),e("judymowatt","ritamarley","bandmate"),e("marciagriffiths","ritamarley","bandmate"),e("marciagriffiths","judymowatt","bandmate"),
+e("freddiemcgregor","coxsone","produced"),e("sugarminott","coxsone","produced"),e("sugarminott","barringtonlevy","mentored"),
+e("ericdonaldson","bobmarley","peer"),e("cornellcampbell","bunnylee","produced"),e("cornellcampbell","coxsone","produced"),
+e("johnnyosbourne","coxsone","produced"),e("johnnyosbourne","rootsradics","recorded with"),
+e("linvalthompson","kingtubby","recorded with"),e("linvalthompson","johnnyclarke","produced"),
+e("thirdworld","bobmarley","peer"),e("steelpulse","aswad","peer"),e("aswad","dennisbrown","peer"),e("innercircle","thirdworld","peer"),
+e("theupsetters","leeperry","member"),e("theupsetters","familyman","member"),
+e("madprofessor","leeperry","collaborated"),e("madprofessor","adriansherwood","peer"),e("mikeydread","kingtubby","recorded with"),
+e("rootsradics","scientist","recorded with"),e("rootsradics","barringtonlevy","recorded with"),e("rootsradics","gregoryisaacs","recorded with"),
+e("deanfraser","dennisbrown","recorded with"),e("deanfraser","freddiemcgregor","recorded with"),e("barringtonlevy","slyrobbie","recorded with"),
+e("yellowman","coxsone","produced"),e("yellowman","eekamouse","peer"),e("yellowman","joseywales","peer"),
+e("eekamouse","joseywales","peer"),e("joseywales","charliechaplin","peer"),e("charliechaplin","brigadierjerry","peer"),
+e("frankiepaul","coccotea","peer"),e("halfpint","slyrobbie","recorded with"),e("halfpint","rootsradics","recorded with"),
+e("tenorsaw","nittygritty","peer"),e("tenorsaw","waynesmith","peer"),e("nittygritty","kingjammy","produced"),
+e("coccotea","kingjammy","produced"),e("admiralbailey","kingjammy","produced"),e("waynesmith","kingjammy","produced"),
+e("shabbaranks","bobbydigital","produced"),e("shabbaranks","supercat","peer"),e("shabbaranks","gussieclarke","produced"),
+e("supercat","ninjaman","peer"),e("ninjaman","bountykiller","rivals"),e("cuttyranks","shabbaranks","peer"),
+e("beenieman","bountykiller","rivals"),e("beenieman","bujubanton","peer"),e("beenieman","steelyclevie","recorded with"),
+e("bountykiller","spraggabenz","peer"),e("capleton","sizzla","peer"),e("capleton","anthonyb","peer"),
+e("sizzla","bobbydigital","produced"),e("sizzla","anthonyb","peer"),e("ladysaw","steelyclevie","recorded with"),
+e("garnettsilk","bobbydigital","produced"),e("garnettsilk","luciano","peer"),e("garnettsilk","tonyrebel","peer"),
+e("bujubanton","dennisbrown","influenced by"),e("bujubanton","gussieclarke","produced"),
+e("luciano","freddiemcgregor","mentored"),e("chakademus","slyrobbie","produced"),e("dawnpenn","steelyclevie","recorded with"),
+e("michaelrose","blackuhuru","member"),e("michaelrose","slyrobbie","recorded with"),e("spraggabenz","beenieman","peer"),
+e("pinchers","kingjammy","produced"),e("littlejohn","kingjammy","produced"),e("steelyclevie","kingjammy","peer"),
+e("gussieclarke","slyrobbie","collaborated"),e("bobbydigital","kingjammy","mentored"),
+e("shaggy","seanpaul","peer"),e("shaggy","shabbaranks","influenced by"),e("seanpaul","beenieman","peer"),e("seanpaul","shabbaranks","influenced by"),
+e("jacobmiller","innercircle","member"),e("jacobmiller","leeperry","produced"),
+e("winstonriley","slimsmith","produced"),e("winstonriley","tenorsaw","produced"),
+e("errolthompson","joegibbs","collaborated"),e("errolthompson","dennisbrown","recorded with"),
+e("donovangermain","bujubanton","produced"),e("donovangermain","gussieclarke","peer"),
+e("lintonkwesi","dennisbovell","collaborated"),e("lintonkwesi","mutabaruka","peer"),e("mutabaruka","princefari","peer"),
+e("dennisbovell","janetkay","produced"),e("dennisbovell","aswad","peer"),e("janetkay","maxipriest","peer"),
+e("maxipriest","aswad","peer"),e("maxipriest","shabbaranks","collaborated"),e("ub40","aswad","peer"),e("mistyinroots","steelpulse","peer"),
+e("smileyculture","yellowman","influenced by"),
+e("damianmarley","stephenmarley","bandmate"),e("damianmarley","ziggymarley","bandmate"),e("damianmarley","bobmarley","influenced by"),e("stephenmarley","ziggymarley","bandmate"),e("stephenmarley","damianmarley","collaborated"),
+e("ziggymarley","bobmarley","influenced by"),e("ziggymarley","ritamarley","recorded with"),
+e("protoje","chronixx","peer"),e("protoje","lilaike","collaborated"),e("protoje","jesseroyal","peer"),
+e("chronixx","koffee","mentored"),e("chronixx","burningspear","influenced by"),
+e("jimmyriley","tarrusriley","mentored"),e("tarrusriley","deanfraser","collaborated"),e("romainvirgo","tarrusriley","peer"),
+e("jahcure","sizzla","peer"),e("alborosie","gentleman","peer"),e("alborosie","kingtubby","influenced by"),e("gentleman","luciano","collaborated"),
+e("bountykiller","vybzkartel","mentored"),e("vybzkartel","popcaan","mentored"),e("vybzkartel","mavado","rivals"),e("vybzkartel","beenieman","peer"),
+e("bountykiller","mavado","mentored"),e("spice","beenieman","recorded with"),e("spice","ladysaw","influenced by"),
+e("jesseroyal","protoje","peer"),e("morganheritage","damianmarley","peer"),e("richiespice","sizzla","peer"),
+e("derrickmorgan","queenifrica","mentored"),e("tonyrebel","queenifrica","mentored"),e("etana","richiespice","peer"),
+e("busysignal","bountykiller","influenced by"),e("jah9","protoje","peer"),e("kabakapyramid","protoje","peer"),e("kabakapyramid","damianmarley","collaborated"),
+e("glenwashington","sizzla","peer"),e("jimmyriley","slimsmith","bandmate"),
+];
+/* ----------  LIBRARY: biographies & further reading  ---------- */
+const LIB={
+bobmarley:{bios:[["Timothy White","Catch a Fire: The Life of Bob Marley","1983"],["Roger Steffens","So Much Things to Say: The Oral History of Bob Marley","2017"],["Chris Salewicz","Bob Marley: The Untold Story","2009"]]},
+petertosh:{bios:[["John Masouri","Steppin' Razor: The Life of Peter Tosh","2013"]]},
+leeperry:{bios:[["David Katz","People Funny Boy: The Genius of Lee 'Scratch' Perry","2000"]]},
+};
+const CRITICS=[
+{name:"Lloyd Bradley",note:"The essential history of reggae",books:[["Bass Culture: When Reggae Was King","2000"],["Sounds Like London","2013"]]},
+{name:"David Katz",note:"Oral historian of Jamaican music",books:[["Solid Foundation: An Oral History of Reggae","2003"],["People Funny Boy: The Genius of Lee 'Scratch' Perry","2000"]]},
+{name:"Steve Barrow & Peter Dalton",note:"The definitive listener's guide",books:[["The Rough Guide to Reggae","1997"]]},
+{name:"Roger Steffens",note:"Foremost Marley archivist",books:[["So Much Things to Say: The Oral History of Bob Marley","2017"]]},
+{name:"Timothy White",note:"Marley's classic biographer",books:[["Catch a Fire: The Life of Bob Marley","1983"]]},
+{name:"Chris Salewicz",note:"Biographer and reggae chronicler",books:[["Bob Marley: The Untold Story","2009"],["Reggae Explosion (with Adrian Boot)","2001"]]},
+{name:"Michael E. Veal",note:"Scholar of dub",books:[["Dub: Soundscapes and Shattered Songs in Jamaican Reggae","2007"]]},
+{name:"Norman C. Stolzoff",note:"Ethnographer of dancehall",books:[["Wake the Town and Tell the People: Dancehall Culture in Jamaica","2000"]]},
+{name:"Beth Lesser",note:"Chronicler of the dancehall years",books:[["Dancehall: The Rise of Jamaican Dancehall Culture","2008"]]},
+{name:"Vivien Goldman",note:"Journalist of punk and reggae",books:[["The Book of Exodus: The Making and Meaning of Bob Marley and the Wailers' Album of the Century","2006"]]},
+{name:"Linton Kwesi Johnson",note:"Dub poet and writer",books:[["Mi Revalueshanary Fren (poems)","2002"]]},
+];
+/* ----------  ENGINE  ---------- */
+const canvas=document.getElementById("c"),ctx=canvas.getContext("2d");
+let W,H,DPR;
+function resize(){DPR=window.devicePixelRatio||1;W=innerWidth;H=innerHeight;canvas.width=W*DPR;canvas.height=H*DPR;canvas.style.width=W+"px";canvas.style.height=H+"px";ctx.setTransform(DPR,0,0,DPR,0,0);}
+addEventListener("resize",resize);resize();
+
+const byId={};
+NODES.forEach(nd=>{byId[nd.id]=nd;nd.x=W/2+(Math.random()-.5)*Math.min(W,900);nd.y=H/2+(Math.random()-.5)*Math.min(H,640);nd.vx=0;nd.vy=0;nd.deg=0;});
+EDGES.forEach(ed=>{ed.s=byId[ed.a];ed.t=byId[ed.b];if(ed.s&&ed.t){ed.s.deg++;ed.t.deg++;}});
+const adj={};NODES.forEach(nd=>adj[nd.id]=new Set());EDGES.forEach(ed=>{if(ed.s&&ed.t){adj[ed.a].add(ed.b);adj[ed.b].add(ed.a);}});
+const radius=nd=>6+Math.sqrt(nd.deg)*3.0;
+
+let activeEras=new Set(Object.keys(ERAS));
+let instrFilter=null;
+const visible=nd=>activeEras.has(nd.era)&&(!instrFilter||nd.instr===instrFilter);
+function instrumentOf(role){const r=role.split("·")[0].trim().toLowerCase();
+  if(/producer|label|studio/.test(r))return"Producer";
+  if(/engineer|dub|mixing/.test(r))return"Engineer & dub";
+  if(/deejay|dj|toaster|toasting|mc|rapper/.test(r))return"Deejay/MC";
+  if(/voc|singer|voice/.test(r))return"Vocals";
+  if(/bass/.test(r))return"Bass";
+  if(/drum|percussion/.test(r))return"Drums";
+  if(/guitar/.test(r))return"Guitar";
+  if(/keyboard|organ|piano|melodica/.test(r))return"Keys";
+  if(/sax/.test(r))return"Saxophone";
+  if(/trombone/.test(r))return"Trombone";
+  if(/trumpet/.test(r))return"Trumpet";
+  if(/poet/.test(r))return"Dub poet";
+  if(/band|group/.test(r))return"Band/Group";
+  return"Other";}
+NODES.forEach(nd=>{const u=Math.random(),v=Math.random(),th=Math.acos(2*u-1),ph=2*Math.PI*v,rr=170*Math.cbrt(Math.random());nd.x=rr*Math.sin(th)*Math.cos(ph);nd.y=rr*Math.sin(th)*Math.sin(ph);nd.z=rr*Math.cos(th);nd.vx=0;nd.vy=0;nd.vz=0;nd.hl=0;nd.instr=instrumentOf(nd.role);});
+let yaw=0,pitch=0,tyaw=null,tpitch=0,vyaw=0.0012,vpitch=0,zoom=1,tzoom=1,tick=0,pulse=0,spread=1.5,viewY=0,tviewY=0,lastYaw=0,lastPitch=0;
+const CAM=760;
+const MOBILE=(typeof window!=="undefined"&&window.matchMedia&&window.matchMedia("(max-width:700px)").matches)||false;
+const BLURK=MOBILE?0.5:1;
+let actx=null,masterGain=null,whooshGain=null,whooshFilter=null,soundOn=false,audioAutoStarted=false;
+let pointer={x:0,y:0,down:false,moved:false};
+const stars=[];for(let i=0;i<240;i++){const u=Math.random(),v=Math.random(),th=Math.acos(2*u-1),ph=2*Math.PI*v;stars.push({x:Math.sin(th)*Math.cos(ph),y:Math.sin(th)*Math.sin(ph),z:Math.cos(th),r:Math.random()*1.1+0.25,tw:Math.random()*6.28});}
+
+let alpha=1;
+function step(){
+  const vis=NODES.filter(visible);
+  const rep=5200*spread,link=120*spread;
+  for(let i=0;i<vis.length;i++){
+    const a=vis[i];
+    a.vx-=a.x*0.0010*alpha;a.vy-=a.y*0.0010*alpha;a.vz-=a.z*0.0010*alpha;
+    for(let j=i+1;j<vis.length;j++){
+      const b=vis[j];let dx=a.x-b.x,dy=a.y-b.y,dz=a.z-b.z,d2=dx*dx+dy*dy+dz*dz||.01,d=Math.sqrt(d2);
+      const minD=26;let f=rep/d2;if(d<minD)f+=(minD-d)*0.6/d;
+      const fx=dx/d*f,fy=dy/d*f,fz=dz/d*f;a.vx+=fx;a.vy+=fy;a.vz+=fz;b.vx-=fx;b.vy-=fy;b.vz-=fz;
+    }
+  }
+  EDGES.forEach(ed=>{if(!ed.s||!visible(ed.s)||!visible(ed.t))return;let dx=ed.t.x-ed.s.x,dy=ed.t.y-ed.s.y,dz=ed.t.z-ed.s.z,d=Math.sqrt(dx*dx+dy*dy+dz*dz)||.01;const f=(d-link)*0.010,fx=dx/d*f,fy=dy/d*f,fz=dz/d*f;ed.s.vx+=fx;ed.s.vy+=fy;ed.s.vz+=fz;ed.t.vx-=fx;ed.t.vy-=fy;ed.t.vz-=fz;});
+  vis.forEach(nd=>{nd.vx*=0.85;nd.vy*=0.85;nd.vz*=0.85;nd.x+=nd.vx;nd.y+=nd.vy;nd.z+=nd.vz;});
+  if(alpha>0.05)alpha*=0.992;
+}
+
+let hoverNode=null,selNode=null,dragNode=null,focusSet=null,pageOpen=false,curId=null;
+function computeFocus(nd){if(!nd){focusSet=null;return;}focusSet=new Set([nd.id]);adj[nd.id].forEach(id=>focusSet.add(id));}
+function hexA(hex,a){const v=parseInt(hex.slice(1),16);return`rgba(${v>>16&255},${v>>8&255},${v&255},${a})`;}
+
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  const cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),spp=Math.sin(pitch);
+  const Rstar=0.62*Math.max(W,H);
+  for(const st of stars){
+    let rx=st.x*cy-st.z*sy,rz=st.x*sy+st.z*cy,ry=st.y*cp-rz*spp;rz=st.y*spp+rz*cp;
+    const t=(rz+1)/2,a=(0.10+0.42*t)*(0.6+0.4*Math.sin(tick*0.02+st.tw));
+    ctx.beginPath();ctx.arc(W/2+rx*Rstar,H/2+ry*Rstar,st.r*(0.5+t),0,6.283);
+    ctx.fillStyle="rgba(226,212,184,"+a.toFixed(3)+")";ctx.fill();
+  }
+  const vis=[];
+  for(const nd of NODES){
+    if(!visible(nd)){nd._sx=null;continue;}
+    let x=nd.x*cy-nd.z*sy,z=nd.x*sy+nd.z*cy,y=nd.y*cp-z*spp;z=nd.y*spp+z*cp;
+    const zz=z*zoom,pf=CAM/Math.max(120,CAM-zz);
+    nd._sx=W/2+x*zoom*pf;nd._sy=H/2+viewY+y*zoom*pf;nd._d=zz;nd._pf=pf;
+    vis.push(nd);
+  }
+  let dmin=1e9,dmax=-1e9;for(const nd of vis){if(nd._d<dmin)dmin=nd._d;if(nd._d>dmax)dmax=nd._d;}
+  const dr=Math.max(1,dmax-dmin),bright=nd=>(nd._d-dmin)/dr;
+  const key=hoverNode||selNode;
+  EDGES.forEach(ed=>{
+    if(!ed.s||!visible(ed.s)||!visible(ed.t))return;
+    const s=ed.s,t=ed.t,on=!focusSet||(focusSet.has(ed.a)&&focusSet.has(ed.b)),lit=key&&(ed.a===key.id||ed.b===key.id);
+    const tb=(bright(s)+bright(t))/2;
+    ctx.beginPath();ctx.moveTo(s._sx,s._sy);ctx.lineTo(t._sx,t._sy);
+    if(lit){ctx.strokeStyle="rgba(224,177,90,"+(0.25+0.45*tb).toFixed(3)+")";ctx.lineWidth=1.6;}
+    else if(on){ctx.strokeStyle="rgba(224,177,90,"+(0.05+0.12*tb).toFixed(3)+")";ctx.lineWidth=1;}
+    else{ctx.strokeStyle="rgba(224,177,90,"+(0.02+0.03*tb).toFixed(3)+")";ctx.lineWidth=0.8;}
+    ctx.stroke();
+    if(lit){const tt=(pulse+(ed.a===key.id?0:0.5))%1;ctx.beginPath();ctx.arc(s._sx+(t._sx-s._sx)*tt,s._sy+(t._sy-s._sy)*tt,2.4,0,6.283);ctx.fillStyle="rgba(245,225,170,0.9)";ctx.fill();}
+  });
+  vis.sort((a,b)=>a._d-b._d);
+  for(const nd of vis){
+    const dim=focusSet&&!focusSet.has(nd.id),col=ERAS[nd.era].color,b=bright(nd);
+    const r=Math.max(1.3,radius(nd)*nd._pf*zoom*0.9*(1+0.5*nd.hl));nd._r=r;
+    ctx.save();
+    ctx.globalAlpha=dim?0.28:Math.min(1,0.45+0.55*b);
+    ctx.shadowColor=col;ctx.shadowBlur=(dim?2:6+16*nd.hl)*(0.6+b)*BLURK;
+    ctx.beginPath();ctx.arc(nd._sx,nd._sy,r,0,6.283);ctx.fillStyle=col;ctx.fill();
+    ctx.restore();
+    if(nd===selNode||nd===hoverNode){ctx.lineWidth=2;ctx.strokeStyle="#f3ece0";ctx.beginPath();ctx.arc(nd._sx,nd._sy,r+1,0,6.283);ctx.stroke();}
+  }
+  const cand=vis.filter(nd=>!focusSet||focusSet.has(nd.id)||nd===hoverNode||nd===selNode);
+  cand.sort((a,b)=>prio(b)-prio(a));
+  const placed=[];ctx.textAlign="center";ctx.textBaseline="top";
+  for(const nd of cand){
+    const big=nd===hoverNode||nd===selNode,b=bright(nd);
+    const fs=Math.max(10.5,(9+3*b)*(0.85+0.35*zoom));
+    ctx.font=(big?"600 ":"400 ")+fs.toFixed(1)+"px Helvetica Neue, Arial";
+    const w=ctx.measureText(nd.name).width,y=nd._sy+nd._r+3,rc={x:nd._sx-w/2-3,y:y-1,w:w+6,h:fs+3};
+    let clash=false;if(!big)for(const o of placed){if(rc.x<o.x+o.w&&rc.x+rc.w>o.x&&rc.y<o.y+o.h&&rc.y+rc.h>o.y){clash=true;break;}}
+    if(clash)continue;placed.push(rc);
+    const dim=focusSet&&!focusSet.has(nd.id);
+    ctx.fillStyle=dim?"rgba(243,236,224,0.18)":"rgba(243,236,224,"+(0.4+0.5*b).toFixed(2)+")";
+    ctx.fillText(nd.name,nd._sx,y);
+  }
+}
+function prio(nd){return (nd===hoverNode||nd===selNode?1e9:0)+(focusSet&&focusSet.has(nd.id)?1e6:0)+nd.deg*120+(nd._d||0);}
+function loop(){
+  tick++;pulse=(pulse+0.012)%1;
+  if(!pointer.down){
+    if(tyaw!=null){const dd=((tyaw-yaw+Math.PI*3)%(Math.PI*2))-Math.PI;yaw+=dd*0.12;pitch+=(tpitch-pitch)*0.12;vyaw=0;vpitch=0;if(Math.abs(dd)<0.01&&Math.abs(tpitch-pitch)<0.01)tyaw=null;}
+    else{yaw+=vyaw;pitch+=vpitch;vyaw+=(0.0012-vyaw)*0.03;vpitch*=0.9;}
+    pitch=Math.max(-1.3,Math.min(1.3,pitch));
+  }
+  zoom+=(tzoom-zoom)*0.12;viewY+=(tviewY-viewY)*0.12;
+  NODES.forEach(nd=>{nd.hl+=(((nd===hoverNode||nd===selNode)?1:0)-nd.hl)*0.16;});
+  if(!pageOpen)step();
+  draw();requestAnimationFrame(loop);
+}
+loop();
+
+/* pointer */
+function nodeAt(px,py){let best=null,bz=-1e9;for(const nd of NODES){if(!visible(nd)||nd._sx==null)continue;const r=(nd._r||6)+6;if(Math.hypot(px-nd._sx,py-nd._sy)<r&&nd._d>bz){bz=nd._d;best=nd;}}return best;}
+canvas.addEventListener("mousemove",ev=>{
+  const px=ev.clientX,py=ev.clientY;
+  if(pointer.down){const dx=px-pointer.x,dy=py-pointer.y;if(Math.abs(dx)+Math.abs(dy)>1){pointer.moved=true;tyaw=null;yaw+=dx*0.005;pitch=Math.max(-1.3,Math.min(1.3,pitch+dy*0.005));vyaw=dx*0.005;vpitch=dy*0.005;}pointer.x=px;pointer.y=py;return;}
+  const nd=nodeAt(px,py);if(nd!==hoverNode){hoverNode=nd;if(!selNode)computeFocus(nd);canvas.style.cursor=nd?"pointer":"grab";}
+  pointer.x=px;pointer.y=py;
+});
+canvas.addEventListener("mousedown",ev=>{unlockAudio();pointer.down=true;pointer.moved=false;pointer.x=ev.clientX;pointer.y=ev.clientY;canvas.style.cursor="grabbing";});
+addEventListener("mouseup",ev=>{if(pointer.down&&!pointer.moved){const nd=nodeAt(ev.clientX,ev.clientY);if(nd)select(nd);else deselect();}pointer.down=false;canvas.style.cursor="grab";});
+canvas.addEventListener("dblclick",ev=>{const nd=nodeAt(ev.clientX,ev.clientY);if(nd)openPage(nd);});
+canvas.addEventListener("wheel",ev=>{ev.preventDefault();const f=ev.deltaY<0?1.1:0.91;tzoom=Math.max(0.3,Math.min(3,tzoom*f));},{passive:false});
+/* touch */
+let touchMode=0,pinchD=0,tapXY=null,lastTap=0;
+canvas.addEventListener("touchstart",ev=>{
+  ev.preventDefault();unlockAudio();
+  if(ev.touches.length===1){pointer.down=true;pointer.moved=false;pointer.x=ev.touches[0].clientX;pointer.y=ev.touches[0].clientY;tapXY={x:pointer.x,y:pointer.y};touchMode=1;}
+  else if(ev.touches.length>=2){touchMode=2;pointer.down=false;pinchD=Math.hypot(ev.touches[0].clientX-ev.touches[1].clientX,ev.touches[0].clientY-ev.touches[1].clientY);}
+},{passive:false});
+canvas.addEventListener("touchmove",ev=>{
+  ev.preventDefault();
+  if(touchMode===1&&ev.touches.length===1){
+    const px=ev.touches[0].clientX,py=ev.touches[0].clientY,dx=px-pointer.x,dy=py-pointer.y;
+    if(Math.abs(dx)+Math.abs(dy)>1.5){pointer.moved=true;tyaw=null;yaw+=dx*0.006;pitch=Math.max(-1.3,Math.min(1.3,pitch+dy*0.006));vyaw=dx*0.006;vpitch=dy*0.006;}
+    pointer.x=px;pointer.y=py;
+  } else if(touchMode===2&&ev.touches.length>=2){
+    const d=Math.hypot(ev.touches[0].clientX-ev.touches[1].clientX,ev.touches[0].clientY-ev.touches[1].clientY);
+    if(pinchD>0)tzoom=Math.max(0.3,Math.min(3,tzoom*(d/pinchD)));
+    pinchD=d;
+  }
+},{passive:false});
+canvas.addEventListener("touchend",ev=>{
+  if(touchMode===1&&!pointer.moved&&tapXY){const now=Date.now(),nd=nodeAt(tapXY.x,tapXY.y);if(now-lastTap<300&&nd){openPage(nd);}else if(nd){select(nd);}else{deselect();}lastTap=now;}
+  pointer.down=false;
+  if(ev.touches.length===0)touchMode=0;
+  else if(ev.touches.length===1){touchMode=1;pointer.down=true;pointer.moved=true;pointer.x=ev.touches[0].clientX;pointer.y=ev.touches[0].clientY;}
+},{passive:false});
+
+/* quick card panel */
+const panel=document.getElementById("panel"),panelBody=document.getElementById("panelBody");
+function select(nd){selNode=nd;computeFocus(nd);renderPanel(nd);panel.classList.add("open");if(MOBILE){tviewY=-H*0.24;centerOn(nd);}playClip(nd);}
+function deselect(){selNode=null;if(!hoverNode)focusSet=null;panel.classList.remove("open");tviewY=0;if(clip)clip.pause();clipNote("");}
+document.getElementById("close").onclick=deselect;
+const SYM=["bandmate","peer","collaborated","rivals","bebop circle","co-founded","recorded with","played with"];
+function relWord(ed,nd){const dir=ed.a===nd.id;if(SYM.includes(ed.rel))return ed.rel;
+  if(ed.rel==="mentored")return dir?"mentored":"mentored by";
+  if(ed.rel==="influenced")return dir?"influenced":"influenced by";
+  if(ed.rel==="influenced by")return dir?"influenced by":"influenced";
+  if(ed.rel==="produced")return dir?"produced":"produced by";
+  if(ed.rel==="engineered")return dir?"engineered":"engineered by";
+  if(ed.rel==="member")return dir?"member of":"includes";
+  if(ed.rel==="founded")return dir?"founded":"founded by";
+  return ed.rel;}
+function connsFor(nd){return EDGES.filter(ed=>ed.a===nd.id||ed.b===nd.id).map(ed=>({other:ed.a===nd.id?byId[ed.b]:byId[ed.a],rel:relWord(ed,nd)})).sort((a,b)=>b.other.deg-a.other.deg);}
+function renderPanel(nd){
+  const era=ERAS[nd.era],cs=connsFor(nd);
+  panelBody.innerHTML=`
+    <span class="pill" style="background:${hexA(era.color,0.18)};color:${era.color}">${era.label}</span>
+    <h2>${nd.name}</h2><div class="role">${nd.role}</div><div class="life">${nd.life}</div>
+    <div class="bio">${nd.blurb}</div>
+    <button class="openpage" id="opBtn">Open full page <span>&rarr;</span></button>
+    <div class="sec">Connections (${cs.length})</div>
+    <div class="conns">${cs.map(c=>`<div class="conn" data-id="${c.other.id}"><span class="rel">${c.rel}</span><span class="nm">${c.other.name}</span></div>`).join("")}</div>`;
+  document.getElementById("opBtn").onclick=()=>openPage(nd);
+  panelBody.querySelectorAll(".conn").forEach(el=>{el.onclick=()=>{const t=byId[el.dataset.id];centerOn(t);select(t);};});
+}
+function centerOn(nd){const R=Math.hypot(nd.x,nd.z);tyaw=Math.atan2(nd.x,nd.z);tpitch=Math.max(-1.3,Math.min(1.3,Math.atan2(nd.y,R)));tzoom=Math.max(tzoom,1.2);}
+
+/* full encyclopedia page */
+const pageEl=document.getElementById("page"),pageInner=document.getElementById("pageInner");
+function openPage(nd){
+  const era=ERAS[nd.era],cs=connsFor(nd);
+  pageInner.innerHTML=`
+    <button class="back" id="backBtn"><span>&larr;</span> Back to the constellation</button>
+    <div class="phead">
+      <div class="pavcol"><div class="pavatar" id="pavatar" style="background:${era.color}">${mono(nd.name)}</div><a id="pcredit" class="pcredit" target="_blank" rel="noopener"></a></div>
+      <div class="pheadtext">
+        <span class="pill" style="background:${hexA(era.color,0.18)};color:${era.color}">${era.label}</span>
+        <h1>${nd.name}</h1>
+        <div class="prole">${nd.role}</div>
+        <div class="plife">${nd.life}</div>
+      </div>
+    </div>
+    <p class="pbio">${nd.bio}</p>
+    <h3>Discography</h3>
+    <div id="discoBox"><div class="discoloading">Loading the full discography from MusicBrainz…</div></div>
+    ${(()=>{const L=LIB[nd.id]||{};const bs=(t,a)=>(a&&a.length)?`<h3>${t}</h3><div>`+a.map(b=>`<div class="brow"><span class="btitle">${b[1]}</span> <span class="bmeta">— ${b[0]}, ${b[2]}</span></div>`).join("")+`</div>`:"";return bs("Biographies & memoirs",L.bios)+bs("Further reading",L.reads);})()}
+    <h3>Connections (${cs.length})</h3>
+    <div class="chips">${cs.map(c=>`<span class="chip" data-id="${c.other.id}"><span class="cd" style="background:${ERAS[c.other.era].color}"></span><span class="cr">${c.rel}</span> ${c.other.name}</span>`).join("")}</div>`;
+  document.getElementById("backBtn").onclick=closePage;
+  pageInner.querySelectorAll(".chip").forEach(el=>{el.onclick=()=>{openPage(byId[el.dataset.id]);pageEl.scrollTop=0;};});
+  curId=nd.id;loadDisco(nd);loadPhoto(nd);
+  pageEl.scrollTop=0;pageEl.classList.add("open");pageOpen=true;
+  selNode=nd;computeFocus(nd);centerOn(nd);
+}
+function closePage(){pageEl.classList.remove("open");pageOpen=false;}
+function openReadingRoom(){
+  pageInner.innerHTML=`<button class="back" id="backBtn"><span>&larr;</span> Back to the constellation</button>
+    <span class="pill" style="background:rgba(224,177,90,.18);color:#e0b15a">The reading room</span>
+    <h1>The reading room</h1>
+    <p class="lead">A shelf of the writers who shaped how we hear this music — the critics, historians, and memoirists worth seeking out beyond any single musician's page.</p>
+    ${CRITICS.map(c=>`<div class="critic"><h4>${c.name}</h4><div class="cnote">${c.note}</div>${c.books.map(b=>`<div class="brow"><span class="btitle">${b[0]}</span> <span class="bmeta">— ${b[1]}</span></div>`).join("")}</div>`).join("")}
+    <h3 style="margin-top:40px">Periodicals, archives &amp; forums</h3>
+    <div class="reslist">${RESOURCES.map(r=>`<a class="reslink" href="${r[2]}" target="_blank" rel="noopener"><span class="rt">${r[0]}</span><span class="rn">${r[1]}</span><span class="ra">&#8599;</span></a>`).join("")}</div>`;
+  document.getElementById("backBtn").onclick=closePage;
+  pageEl.scrollTop=0;pageEl.classList.add("open");pageOpen=true;
+}
+document.getElementById("rrBtn").onclick=openReadingRoom;
+
+/* ----------  LIVE DISCOGRAPHY (MusicBrainz)  ---------- */
+const RESOURCES=[
+["Reggaeville","News, videos, and releases","https://www.reggaeville.com"],
+["United Reggae","Reviews, interviews, and history","https://unitedreggae.com"],
+["Roots Archives","Deep Jamaican discographies","https://www.roots-archives.com"],
+["Discogs — Reggae","Detailed release and label data","https://www.discogs.com/genre/reggae"],
+];
+let mbLast=0;
+function mbFetch(url){const wait=Math.max(0,1100-(Date.now()-mbLast));return new Promise((res,rej)=>setTimeout(()=>{mbLast=Date.now();fetch(url).then(r=>{if(!r.ok)throw new Error("http "+r.status);return r.json();}).then(res,rej);},wait));}
+function resolveAndFetch(nd){
+  const getRGs=mbid=>{let items=[],offset=0;const more=()=>mbFetch(`https://musicbrainz.org/ws/2/release-group?artist=${mbid}&fmt=json&limit=100&offset=${offset}`).then(d=>{(d["release-groups"]||[]).forEach(rg=>items.push({title:rg.title,year:(rg["first-release-date"]||"").slice(0,4),primary:rg["primary-type"]||"",secondary:rg["secondary-types"]||[]}));const total=d["release-group-count"]||items.length;offset+=100;return(offset<total&&offset<400)?more():items;});return more();};
+  if(nd.mbid)return getRGs(nd.mbid);
+  return mbFetch(`https://musicbrainz.org/ws/2/artist?query=${encodeURIComponent('artist:"'+nd.name+'"')}&fmt=json&limit=8`).then(d=>{const list=d.artists||[];if(!list.length)throw new Error("no match");const best=list.find(a=>a.name.toLowerCase()===nd.name.toLowerCase())||list[0];return getRGs(best.id);});
+}
+function dtag(i){const t=(i.secondary&&i.secondary.length)?i.secondary.join(", "):(i.primary&&i.primary!=="Album"?i.primary:"");return t?`<span class="dtag">${t}</span>`:"";}
+function svc(q){const e=encodeURIComponent(q.replace(/\s+/g," ").trim());return `<span class="svc"><a href="https://open.spotify.com/search/${e}" target="_blank" rel="noopener">Spotify</a><a class="apple" data-q="${e}" href="https://music.apple.com/us/search?term=${e}" target="_blank" rel="noopener">Apple</a><a href="https://www.youtube.com/results?search_query=${e}" target="_blank" rel="noopener">YouTube</a></span>`;}
+function wireApple(box){if(!box||!box.querySelectorAll)return;box.querySelectorAll("a.apple").forEach(a=>{a.onclick=appleClick;});}
+function appleClick(ev){
+  ev.preventDefault();
+  const q=decodeURIComponent(this.dataset.q||"");
+  const fb="https://music.apple.com/us/search?term="+encodeURIComponent(q);
+  let w=null;try{w=window.open("","_blank");}catch(e){}
+  let done=false;const go=u=>{if(done)return;done=true;const url=u||fb;try{if(w&&!w.closed){w.location.href=url;return;}}catch(e){}window.location.href=url;};
+  let cached=null;try{cached=localStorage.getItem("jc_apple_"+q);}catch(e){}
+  if(cached&&cached.indexOf("/album/")>=0){go(cached);return false;}
+  setTimeout(()=>go(fb),8000);
+  if(typeof fetch==="undefined"){go(fb);return false;}
+  const api="https://itunes.apple.com/search?term="+encodeURIComponent(q)+"&media=music&entity=album&limit=5";
+  fetchJSON(api).then(d=>{const r=((d&&d.results)||[]).find(x=>x.collectionViewUrl);if(r){try{localStorage.setItem("jc_apple_"+q,r.collectionViewUrl);}catch(e){}go(r.collectionViewUrl);}else{go(fb);}}).catch(()=>go(fb));
+  return false;
+}
+function renderDisco(box,nd,items){
+  const sorted=items.slice().sort((a,b)=>(a.year||"9999").localeCompare(b.year||"9999"));
+  const isMain=i=>i.primary==="Album"&&!i.secondary.includes("Compilation");
+  const main=sorted.filter(isMain),other=sorted.filter(i=>!isMain(i));
+  const row=i=>`<div class="drow"><span class="dyear">${i.year||"—"}</span><span class="dmain"><span class="dtitle">${i.title}</span>${dtag(i)}${svc(nd.name+" "+i.title)}</span></div>`;
+  let html=`<div class="discometa">${items.length} releases · via MusicBrainz</div><div class="disco">${main.map(row).join("")||'<div class="dnote">No studio albums listed.</div>'}</div>`;
+  if(other.length)html+=`<button class="moreBtn" id="moreBtn">Show ${other.length} more — EPs, live &amp; compilations</button><div class="disco" id="otherDisco" style="display:none">${other.map(row).join("")}</div>`;
+  box.innerHTML=html;wireApple(box);
+  const mb=document.getElementById("moreBtn");
+  if(mb)mb.onclick=()=>{const o=document.getElementById("otherDisco"),sh=o.style.display==="none";o.style.display=sh?"":"none";mb.innerHTML=sh?"Hide EPs, live &amp; compilations":`Show ${other.length} more — EPs, live &amp; compilations`;};
+}
+function renderFallback(box,nd){box.innerHTML=`<div class="discometa">Showing essentials — connect to the internet to load the full discography from MusicBrainz.</div><div class="disco">${(nd.disco||[]).map(d=>`<div class="drow"><span class="dyear">${d[0]}</span><span class="dmain"><span class="dtitle">${d[1]}</span>${d[2]?`<span class="dnote">— ${d[2]}</span>`:""}${svc(nd.name+" "+d[1])}</span></div>`).join("")}</div>`;wireApple(box);}
+function loadDisco(nd){
+  const box=document.getElementById("discoBox");if(!box)return;
+  const key="jc_disco_"+nd.id;let cached=null;try{cached=JSON.parse(localStorage.getItem(key)||"null");}catch(e){}
+  if(cached&&cached.items){renderDisco(box,nd,cached.items);return;}
+  resolveAndFetch(nd).then(items=>{try{localStorage.setItem(key,JSON.stringify({items,ts:Date.now()}));}catch(e){}if(curId===nd.id)renderDisco(box,nd,items);}).catch(()=>{if(curId===nd.id)renderFallback(box,nd);});
+}
+const WIKI={skatalites:"The Skatalites",heptones:"The Heptones",theparagons:"The Paragons (Jamaican band)",scientist:"Scientist (musician)",kingjammy:"King Jammy",niney:"Niney the Observer",coxsone:"Coxsone Dodd",princebuster:"Prince Buster",slyrobbie:"Sly and Robbie",familyman:"Aston Barrett",carltonbarrett:"Carlton Barrett",burningspear:"Burning Spear",augustuspablo:"Augustus Pablo",bunnywailer:"Bunny Wailer",dennisbrown:"Dennis Brown",kingtubby:"King Tubby",leeperry:"Lee \"Scratch\" Perry",bobandy:"Bob Andy",slimsmith:"Slim Smith (musician)",delroywilson:"Delroy Wilson",hoptonlewis:"Hopeton Lewis",bunnylee:"Bunny Lee",joegibbs:"Joe Gibbs (record producer)",jackiemittoo:"Jackie Mittoo",leroysibbles:"Leroy Sibbles",culture:"Culture (band)",abyssinians:"The Abyssinians",mightydiamonds:"Mighty Diamonds",blackuhuru:"Black Uhuru",israelvibration:"Israel Vibration",wailingsouls:"Wailing Souls",congos:"The Congos",thirdworld:"Third World (band)",steelpulse:"Steel Pulse",aswad:"Aswad",innercircle:"Inner Circle (band)",theupsetters:"The Upsetters",rootsradics:"Roots Radics",madprofessor:"Mad Professor",adriansherwood:"Adrian Sherwood",mikeydread:"Mikey Dread",uroy:"U-Roy",iroy:"I-Roy",bigyouth:"Big Youth",princefari:"Prince Far I",tappazukie:"Tapper Zukie",dillinger:"Dillinger (musician)",horaceandy:"Horace Andy",gregoryisaacs:"Gregory Isaacs",sugarminott:"Sugar Minott",barringtonlevy:"Barrington Levy",johnnyosbourne:"Johnny Osbourne",deanfraser:"Dean Fraser",eekamouse:"Eek-a-Mouse",shabbaranks:"Shabba Ranks",supercat:"Super Cat",beenieman:"Beenie Man",bountykiller:"Bounty Killer",ladysaw:"Lady Saw",garnettsilk:"Garnett Silk",bujubanton:"Buju Banton",luciano:"Luciano (singer)",chakademus:"Chaka Demus & Pliers",dawnpenn:"Dawn Penn",michaelrose:"Michael Rose (musician)",shaggy:"Shaggy (musician)",steelyclevie:"Steely & Clevie",bobbydigital:"Bobby Digital (Jamaican record producer)",frankiepaul:"Frankie Paul (musician)",tenorsaw:"Tenor Saw",waynesmith:"Wayne Smith (musician)",littlejohn:"Little John (musician)",pinchers:"Pinchers (musician)",joseywales:"Josey Wales (deejay)",coccotea:"Cocoa Tea (musician)",nittygritty:"Nitty Gritty (musician)",charliechaplin:"Charlie Chaplin (deejay)",halfpint:"Half Pint (musician)",spraggabenz:"Spragga Benz",tonyrebel:"Tony Rebel",ub40:"UB40",morganheritage:"Morgan Heritage",mistyinroots:"Misty in Roots",lintonkwesi:"Linton Kwesi Johnson",dennisbovell:"Dennis Bovell",janetkay:"Janet Kay",maxipriest:"Maxi Priest",smileyculture:"Smiley Culture",damianmarley:"Damian Marley",stephenmarley:"Stephen Marley",ziggymarley:"Ziggy Marley",protoje:"Protoje",chronixx:"Chronixx",koffee:"Koffee (musician)",tarrusriley:"Tarrus Riley",romainvirgo:"Romain Virgo",jahcure:"Jah Cure",alborosie:"Alborosie",gentleman:"Gentleman (musician)",vybzkartel:"Vybz Kartel",popcaan:"Popcaan",spice:"Spice (musician)",mavado:"Mavado (singer)",jesseroyal:"Jesse Royal",richiespice:"Richie Spice",queenifrica:"Queen Ifrica",etana:"Etana",busysignal:"Busy Signal",lilaike:"Lila Iké",jah9:"Jah9",kabakapyramid:"Kabaka Pyramid",glenwashington:"Glen Washington (musician)",jimmyriley:"Jimmy Riley (musician)",jacobmiller:"Jacob Miller",winstonriley:"Winston Riley",mutabaruka:"Mutabaruka",donovangermain:"Donovan Germain"};
+function mono(name){const p=name.split(" ").filter(Boolean);return((p[0][0]||"")+(p.length>1?p[p.length-1][0]:"")).toUpperCase();}
+function loadPhoto(nd){
+  const av=document.getElementById("pavatar");if(!av)return;
+  const key="jc_photo_"+nd.id;let cached=null;try{cached=localStorage.getItem(key);}catch(e){}
+  const set=url=>{if(url&&url!=="none"&&curId===nd.id){const img=new Image();img.alt=nd.name;img.onload=()=>{if(curId===nd.id){av.classList.add("hasimg");av.innerHTML="";av.appendChild(img);const cr=document.getElementById("pcredit");if(cr){cr.href="https://en.wikipedia.org/wiki/"+encodeURIComponent(WIKI[nd.id]||nd.name);cr.textContent="Photo: Wikipedia";cr.classList.add("show");}}};img.src=url;}};
+  if(cached!==null){set(cached);return;}
+  const title=WIKI[nd.id]||nd.name;
+  fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`).then(r=>r.ok?r.json():Promise.reject()).then(d=>{const url=(d.type==="standard"&&d.thumbnail&&d.thumbnail.source)?d.thumbnail.source:"none";try{localStorage.setItem(key,url);}catch(e){}set(url);}).catch(()=>{});
+}
+addEventListener("keydown",ev=>{if(ev.key==="Escape"){if(pageOpen)closePage();else deselect();}});
+
+/* legend */
+const legend=document.getElementById("legend");
+legend.innerHTML=`<div class="lh">Eras — click to filter</div>`+Object.entries(ERAS).map(([k,v])=>`<label data-era="${k}"><span class="dot" style="background:${v.color}"></span>${v.label}</label>`).join("");
+legend.querySelectorAll("label").forEach(el=>{el.onclick=()=>{const k=el.dataset.era;if(activeEras.has(k)){activeEras.delete(k);el.classList.add("off");}else{activeEras.add(k);el.classList.remove("off");}alpha=Math.max(alpha,0.4);};});
+
+/* search */
+const q=document.getElementById("q"),suggest=document.getElementById("suggest");
+let sIdx=-1,sList=[];
+q.addEventListener("input",()=>{
+  const v=q.value.trim().toLowerCase();
+  if(!v){suggest.style.display="none";return;}
+  sList=NODES.filter(nd=>nd.name.toLowerCase().includes(v)||nd.role.toLowerCase().includes(v)||nd.instr.toLowerCase().includes(v)).slice(0,12);sIdx=-1;
+  if(!sList.length){suggest.style.display="none";return;}
+  suggest.innerHTML=sList.map((nd,i)=>`<div data-i="${i}">${nd.name} <span style="color:var(--muted);font-size:11px">${nd.instr}</span></div>`).join("");
+  suggest.style.display="block";
+  suggest.querySelectorAll("div").forEach(el=>{el.onclick=()=>pick(sList[+el.dataset.i]);});
+});
+q.addEventListener("keydown",ev=>{
+  if(suggest.style.display!=="block")return;
+  const items=suggest.querySelectorAll("div");
+  if(ev.key==="ArrowDown")sIdx=Math.min(sList.length-1,sIdx+1);
+  else if(ev.key==="ArrowUp")sIdx=Math.max(0,sIdx-1);
+  else if(ev.key==="Enter"){pick(sList[sIdx<0?0:sIdx]);return;}
+  else return;
+  items.forEach((el,i)=>el.classList.toggle("active",i===sIdx));ev.preventDefault();
+});
+function pick(nd){if(!nd)return;if(!activeEras.has(nd.era)){activeEras.add(nd.era);legend.querySelector(`[data-era="${nd.era}"]`).classList.remove("off");}if(instrFilter&&nd.instr!==instrFilter){instrFilter=null;const ie=document.getElementById("instr");if(ie)ie.value="";}q.value="";suggest.style.display="none";centerOn(nd);select(nd);}
+document.addEventListener("click",ev=>{if(!q.parentNode.contains(ev.target))suggest.style.display="none";});
+
+const spreadEl=document.getElementById("spread");
+if(spreadEl){spreadEl.value=spread;spreadEl.oninput=()=>{spread=parseFloat(spreadEl.value);alpha=Math.max(alpha,0.75);};}
+
+/* ----------  AMBIENT SOUND (synthesized)  ---------- */
+function initAudio(){
+  if(actx)return;
+  const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+  actx=new AC();
+  masterGain=actx.createGain();masterGain.gain.value=0;masterGain.connect(actx.destination);
+  const n=Math.floor(actx.sampleRate*2),buf=actx.createBuffer(1,n,actx.sampleRate),d=buf.getChannelData(0);
+  let last=0;for(let i=0;i<n;i++){const w=Math.random()*2-1;last=(last+0.02*w)/1.02;d[i]=last*3;}
+  const noise=actx.createBufferSource();noise.buffer=buf;noise.loop=true;
+  whooshFilter=actx.createBiquadFilter();whooshFilter.type="bandpass";whooshFilter.frequency.value=500;whooshFilter.Q.value=0.6;
+  whooshGain=actx.createGain();whooshGain.gain.value=0;
+  noise.connect(whooshFilter);whooshFilter.connect(whooshGain);whooshGain.connect(masterGain);noise.start();
+}
+function ensureWhoosh(){
+  if(audioAutoStarted)return;audioAutoStarted=true;
+  initAudio();if(!actx)return;
+  if(actx.state==="suspended")actx.resume();
+  soundOn=true;
+  const t=actx.currentTime;masterGain.gain.cancelScheduledValues(t);masterGain.gain.setValueAtTime(masterGain.gain.value,t);masterGain.gain.linearRampToValueAtTime(0.5,t+0.4);
+  const sb=document.getElementById("soundBtn");if(sb){sb.classList.add("on");sb.textContent="Sound ◉";}
+}
+function ping(freq){
+  if(!actx||!soundOn||!masterGain)return;
+  const o=actx.createOscillator(),g=actx.createGain();o.type="triangle";o.frequency.value=freq||440;
+  o.connect(g);g.connect(masterGain);const t=actx.currentTime;
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.1,t+0.012);g.gain.exponentialRampToValueAtTime(0.0008,t+0.9);
+  o.start(t);o.stop(t+0.95);
+}
+const soundBtn=document.getElementById("soundBtn");
+if(soundBtn)soundBtn.onclick=()=>{
+  initAudio();if(!actx)return;
+  if(actx.state==="suspended")actx.resume();
+  soundOn=!soundOn;
+  soundBtn.classList.toggle("on",soundOn);
+  soundBtn.textContent=soundOn?"Sound ◉":"Sound";
+  const t=actx.currentTime;masterGain.gain.cancelScheduledValues(t);masterGain.gain.setValueAtTime(masterGain.gain.value,t);masterGain.gain.linearRampToValueAtTime(soundOn?0.5:0,t+0.6);
+};
+
+/* ----------  AUDIO PREVIEW CLIPS (Apple/iTunes)  ---------- */
+const clip=(typeof Audio!=="undefined")?new Audio():null;
+let clipFor=null;
+const SILENT="data:audio/wav;base64,UklGRoQJAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YWAJAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIA=";
+let audioUnlocked=false;
+function unlockAudio(){if(!clip||audioUnlocked)return;audioUnlocked=true;try{clip.src=SILENT;const p=clip.play();if(p&&p.catch)p.catch(()=>{audioUnlocked=false;});}catch(e){audioUnlocked=false;}}
+function duck(){if(masterGain&&soundOn&&actx){const t=actx.currentTime;masterGain.gain.cancelScheduledValues(t);masterGain.gain.setValueAtTime(masterGain.gain.value,t);masterGain.gain.linearRampToValueAtTime(0.12,t+0.25);}}
+function unduck(){if(masterGain&&soundOn&&actx){const t=actx.currentTime;masterGain.gain.cancelScheduledValues(t);masterGain.gain.setValueAtTime(masterGain.gain.value,t);masterGain.gain.linearRampToValueAtTime(0.5,t+0.7);}}
+function clipNote(msg,hold){const el=document.getElementById("clipnote");if(!el)return;clearTimeout(clipNote._t);if(!msg){el.classList.remove("show");return;}el.textContent=msg;el.classList.add("show");clipNote._t=setTimeout(()=>el.classList.remove("show"),hold||2600);}
+function playPreview(url,name){if(!clip)return;if(!url||url==="none"){clipNote("No preview found for "+name);return;}clip.src=url;try{clip.currentTime=0;}catch(e){}const p=clip.play();if(p&&p.catch)p.catch(()=>{clipNote("Tap again to hear "+name);});clipNote("♪  "+name,32000);}
+function jsonpLookup(term,cb){
+  if(typeof document==="undefined"||!document.body){cb(null);return;}
+  const id="itcb"+(Math.random()*1e9|0);let done=false;
+  const s=document.createElement("script");
+  function cleanup(){try{delete window[id];}catch(e){window[id]=undefined;}if(s.parentNode)s.parentNode.removeChild(s);}
+  window[id]=data=>{if(done)return;done=true;cleanup();const r=((data&&data.results)||[]).find(x=>x.previewUrl);cb(r?r.previewUrl:"none");};
+  s.onerror=()=>{if(!done){done=true;cleanup();cb(null);}};
+  s.src="https://itunes.apple.com/search?term="+encodeURIComponent(term)+"&media=music&entity=song&attribute=artistTerm&limit=4&callback="+id;
+  document.body.appendChild(s);
+  setTimeout(()=>{if(!done){done=true;cleanup();cb(null);}},6500);
+}
+function tfetch(u,ms){return Promise.race([fetch(u).then(r=>r.ok?r.json():Promise.reject()),new Promise((_,rej)=>setTimeout(rej,ms))]);}
+function fetchJSON(url){let p=Promise.reject();["https://jazz-itunes.hueyb.workers.dev/?url=","","https://corsproxy.io/?url=","https://api.allorigins.win/raw?url=","https://thingproxy.freeboard.io/fetch/"].forEach(px=>{p=p.catch(()=>tfetch(px?px+encodeURIComponent(url):url,3500));});return p;}
+function deezerPreview(name,cb){
+  if(typeof document==="undefined"||!document.body){cb(null);return;}
+  const id="dzcb"+(Math.random()*1e9|0);let done=false;
+  const s=document.createElement("script");
+  function cleanup(){try{delete window[id];}catch(e){window[id]=undefined;}if(s.parentNode)s.parentNode.removeChild(s);}
+  window[id]=data=>{if(done)return;done=true;cleanup();const arr=(data&&data.data)||[];const t=arr.find(x=>x&&x.preview);cb(t?t.preview:null);};
+  s.onerror=()=>{if(!done){done=true;cleanup();cb(null);}};
+  s.src="https://api.deezer.com/search?q="+encodeURIComponent(name)+"&limit=8&output=jsonp&callback="+id;
+  document.body.appendChild(s);
+  setTimeout(()=>{if(!done){done=true;cleanup();cb(null);}},6000);
+}
+function itunesLookup(term,cb){
+  let done=false;const fin=v=>{if(done)return;done=true;cb(v);};
+  if(typeof fetch==="undefined"){jsonpLookup(term,fin);return;}
+  const url="https://itunes.apple.com/search?term="+encodeURIComponent(term)+"&media=music&entity=song&attribute=artistTerm&limit=5";
+  setTimeout(()=>fin(null),12000);
+  fetchJSON(url).then(d=>{const r=((d&&d.results)||[]).find(x=>x.previewUrl);fin(r?r.previewUrl:"none");}).catch(()=>jsonpLookup(term,fin));
+}
+function playClip(nd){
+  if(!clip)return;
+  clipFor=nd.id;
+  let cached=null;try{cached=localStorage.getItem("jc_clip_"+nd.id);}catch(e){}
+  if(cached&&cached!=="none"){playPreview(cached,nd.name);return;}
+  clipNote("♪  finding "+nd.name+"…",6500);
+  deezerPreview(nd.name,url=>{
+    if(clipFor!==nd.id)return;
+    if(url){try{localStorage.setItem("jc_clip_"+nd.id,url);}catch(e){}playPreview(url,nd.name);return;}
+    itunesLookup(nd.name,u2=>{
+      if(clipFor!==nd.id)return;
+      if(u2===null){clipNote("Couldn't load a preview — try again");return;}
+      if(u2&&u2!=="none"){try{localStorage.setItem("jc_clip_"+nd.id,u2);}catch(e){}}
+      playPreview(u2,nd.name);
+    });
+  });
+}
+
+function fitView(){let R=1;for(const nd of NODES){if(!visible(nd))continue;R=Math.max(R,Math.hypot(nd.x,nd.y,nd.z));}tzoom=Math.max(0.3,Math.min(2.4,(Math.min(W,H)*0.46)/R));tyaw=null;}
+const fitBtn=document.getElementById("fitBtn");if(fitBtn)fitBtn.onclick=fitView;
+let userFramed=false;["wheel","mousedown"].forEach(ev=>canvas.addEventListener(ev,()=>{userFramed=true;}));
+setTimeout(()=>{if(!userFramed)fitView();},2200);
+
+const instrEl=document.getElementById("instr");
+if(instrEl){[...new Set(NODES.map(nd=>nd.instr))].sort().forEach(i=>{const o=document.createElement("option");o.value=i;o.textContent=i;instrEl.appendChild(o);});instrEl.onchange=()=>{instrFilter=instrEl.value||null;alpha=Math.max(alpha,0.8);userFramed=true;setTimeout(fitView,650);};}
+</script>
+</body>
+</html>
